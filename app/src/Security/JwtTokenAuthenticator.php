@@ -1,25 +1,28 @@
 <?php
 namespace App\Security;
 
-use App\Entity\User;
+use App\Entity\Users;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
+use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
 use Symfony\Component\Security\Guard\AbstractGuardAuthenticator;
 
-class TokenAuthenticator extends AbstractGuardAuthenticator
+class JwtTokenAuthenticator extends AbstractGuardAuthenticator
 {
+    private $jwtEncoder;
     private $em;
 
-    public function __construct(EntityManagerInterface $em)
-    {
-        $this->em = $em;
-    }
+//    public function __construct(JWTEncoderInterface $jwtEncoder, EntityManagerInterface $em)
+//    {
+//        $this->jwtEncoder = $jwtEncoder;
+//        $this->em = $em;
+//    }
 
     /**
      * Called on every request to decide if this authenticator should be
@@ -34,23 +37,39 @@ class TokenAuthenticator extends AbstractGuardAuthenticator
     /**
      * Called on every request. Return whatever credentials you want to
      * be passed to getUser() as $credentials.
+     * This will cause authentication to stop. Not fail, just stop trying to authenticate the user via this method.
+     * If there is a token, return it!
      */
     public function getCredentials(Request $request)
     {
-        return $request->headers->get('X-AUTH-TOKEN');
+//        $extractor = new AuthorizationHeaderTokenExtractor(
+//            'Bearer',
+//            'Authorization'
+//        );
+//        $token = $extractor->extract($request);
+//        if (!$token) {
+//            return;
+//        }
+//
+//        return $token;
     }
 
     public function getUser($credentials, UserProviderInterface $userProvider)
     {
-        if (null === $credentials) {
-            // The token header was empty, authentication fails with 401
-            return;
-        }
-
-        // if a User is returned, checkCredentials() is called
-        return $this->em->getRepository(User::class)
-            ->findOneBy(['apiToken' => $credentials])
-            ;
+//        try {
+//            $data = $this->jwtEncoder->decode($credentials);
+//        } catch (JWTDecodeFailureException $e) {
+//            // if you want to, use can use $e->getReason() to find out which of the 3 possible things went wrong
+//            // and tweak the message accordingly
+//            // https://github.com/lexik/LexikJWTAuthenticationBundle/blob/05e15967f4dab94c8a75b275692d928a2fbf6d18/Exception/JWTDecodeFailureException.php
+//
+//            throw new CustomUserMessageAuthenticationException('Invalid Token');
+//        }
+//
+//        $email = $data['email'];
+//        return $this->em
+//            ->getRepository('AppBundle:Users')
+//            ->findOneBy(['email' => $email]);
     }
 
     public function checkCredentials($credentials, UserInterface $user)

@@ -12,11 +12,9 @@ RUN apt-get update && apt-get install -y \
         libonig-dev \
         libzip-dev \
         wget \
-    && pecl install xdebug \
     && docker-php-ext-install -j$(nproc) mbstring pgsql pdo_pgsql tokenizer iconv mysqli  \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) gd \
-    && docker-php-ext-enable xdebug
+    && docker-php-ext-install -j$(nproc) gd
 
 
 RUN pecl install apcu
