@@ -20,6 +20,8 @@ use Symfony\Component\Security\Guard\Authenticator\AbstractFormLoginAuthenticato
 use Symfony\Component\Security\Guard\AuthenticatorInterface;
 use Symfony\Component\Security\Guard\PasswordAuthenticatedInterface;
 use Symfony\Component\Security\Http\Util\TargetPathTrait;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class AppCustomAuthenticator extends AbstractFormLoginAuthenticator implements AuthenticatorInterface
 {
@@ -28,12 +30,18 @@ class AppCustomAuthenticator extends AbstractFormLoginAuthenticator implements A
     private $entityManager;
     private $urlGenerator;
     private $passwordEncoder;
+    private $validator;
 
-    public function __construct(EntityManagerInterface $entityManager, UrlGeneratorInterface $urlGenerator,  UserPasswordEncoderInterface $passwordEncoder)
-    {
+    public function __construct(
+        EntityManagerInterface $entityManager,
+        UrlGeneratorInterface $urlGenerator,
+        UserPasswordEncoderInterface $passwordEncoder,
+        ValidatorInterface $validator
+    ) {
         $this->entityManager = $entityManager;
         $this->urlGenerator = $urlGenerator;
         $this->passwordEncoder = $passwordEncoder;
+        $this->validator = $validator;
     }
 
     public function supports(Request $request)
@@ -45,11 +53,19 @@ class AppCustomAuthenticator extends AbstractFormLoginAuthenticator implements A
 
     public function getCredentials(Request $request)
     {
+
         $credentials = [
             'email' => $request->request->get('email'),
             'password' => $request->request->get('password'),
         ];
+        $constraint = new Assert\Collection([
+            // the keys correspond to the keys in the input array
 
+            'email' => new Assert\Email(),
+
+            'password' => new Assert\Length(['min' => 6]),
+        ]);
+        var_dump($this->validator->validate($request->query->all(), $constraint));
 
         return $credentials;
     }

@@ -5,6 +5,7 @@
         "php": "^7.2.5",
         "ext-ctype": "*",
         "ext-iconv": "*",
+        "doctrine/annotations": "^1.8",
         "lexik/jwt-authentication-bundle": "^2.6",
         "sensio/framework-extra-bundle": "^5.5",
         "symfony/console": "5.0.*",
@@ -14,6 +15,7 @@
         "symfony/orm-pack": "^1.0",
         "symfony/security-bundle": "5.0.*",
         "symfony/twig-pack": "^1.0",
+        "symfony/validator": "5.0.*",
         "symfony/yaml": "5.0.*"
     },
     "require-dev": {
