@@ -2,13 +2,13 @@
 
 namespace App\Security;
 
-use App\Entity\Users;
+use App\Entity\Login;
+use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
+use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
@@ -18,9 +18,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
 use Symfony\Component\Security\Guard\Authenticator\AbstractFormLoginAuthenticator;
 use Symfony\Component\Security\Guard\AuthenticatorInterface;
-use Symfony\Component\Security\Guard\PasswordAuthenticatedInterface;
 use Symfony\Component\Security\Http\Util\TargetPathTrait;
-use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class AppCustomAuthenticator extends AbstractFormLoginAuthenticator implements AuthenticatorInterface
@@ -31,17 +29,21 @@ class AppCustomAuthenticator extends AbstractFormLoginAuthenticator implements A
     private $urlGenerator;
     private $passwordEncoder;
     private $validator;
+    private $jWTManager;
+
 
     public function __construct(
         EntityManagerInterface $entityManager,
         UrlGeneratorInterface $urlGenerator,
         UserPasswordEncoderInterface $passwordEncoder,
-        ValidatorInterface $validator
+        ValidatorInterface $validator,
+        JWTTokenManagerInterface $JWTManager
     ) {
         $this->entityManager = $entityManager;
         $this->urlGenerator = $urlGenerator;
         $this->passwordEncoder = $passwordEncoder;
         $this->validator = $validator;
+        $this->jWTManager = $JWTManager;
     }
 
     public function supports(Request $request)
@@ -53,26 +55,28 @@ class AppCustomAuthenticator extends AbstractFormLoginAuthenticator implements A
 
     public function getCredentials(Request $request)
     {
-
+        $data = json_decode($request->getContent(), true);
+        $loginObj = new Login();
+        $loginObj->email = $data['email'];
+        $loginObj->password = $data['password'];
         $credentials = [
-            'email' => $request->request->get('email'),
-            'password' => $request->request->get('password'),
+            'email' => $data['email'],
+            'password' => $data['password'],
         ];
-        $constraint = new Assert\Collection([
-            // the keys correspond to the keys in the input array
 
-            'email' => new Assert\Email(),
-
-            'password' => new Assert\Length(['min' => 6]),
-        ]);
-        var_dump($this->validator->validate($request->query->all(), $constraint));
+        $errors = $this->validator->validate($loginObj); 
+        if(count($errors) > 0){
+            throw new CustomUserMessageAuthenticationException(
+                $errors[0]->getPropertyPath() . ' ' . $errors[0]->getMessage()
+            );            
+        }
 
         return $credentials;
     }
 
     public function getUser($credentials, UserProviderInterface $userProvider)
     {
-        $user = $this->entityManager->getRepository(Users::class)->findOneBy(['email' => $credentials['email']]);
+        $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $credentials['email']]);
 
         if (!$user) {
             // fail authentication with a custom error
@@ -97,7 +101,14 @@ class AppCustomAuthenticator extends AbstractFormLoginAuthenticator implements A
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, $providerKey)
     {
+        //Clever bustards try to force us store password in JWT token
+        $user = $token->getUser();
+        $user->setPassword('Suck_my_dick');
+        $user->setEmail('Suck-my-dick3412@gmail.com');
 
+        $token = $this->jWTManager->create($user);
+
+        return new JsonResponse(['token' => $token]);
     }
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception)
     {
@@ -110,10 +121,6 @@ class AppCustomAuthenticator extends AbstractFormLoginAuthenticator implements A
         ];
 
         return new JsonResponse($data, Response::HTTP_UNAUTHORIZED);
-    }
-    public function createAuthenticatedToken(UserInterface $user, string $providerKey)
-    {
-
     }
 
     protected function getLoginUrl()
