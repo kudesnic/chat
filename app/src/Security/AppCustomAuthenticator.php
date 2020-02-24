@@ -4,6 +4,8 @@ namespace App\Security;
 
 use App\Entity\Login;
 use App\Entity\User;
+use App\Exception\FormException;
+use App\Exception\ValidationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -66,9 +68,7 @@ class AppCustomAuthenticator extends AbstractFormLoginAuthenticator implements A
 
         $errors = $this->validator->validate($loginObj); 
         if(count($errors) > 0){
-            throw new CustomUserMessageAuthenticationException(
-                $errors[0]->getPropertyPath() . ' ' . $errors[0]->getMessage()
-            );            
+            throw new ValidationException($errors, 401);
         }
 
         return $credentials;

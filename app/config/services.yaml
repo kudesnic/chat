@@ -23,5 +23,18 @@ services:
         resource: '../src/Controller'
         tags: ['controller.service_arguments']
 
+    App\EventListener\ExceptionListener:
+        tags:
+        - { name: kernel.event_listener, event: kernel.exception }
+
+    App\Serializer\FormExceptionNormalizer:
+        tags: ['serializer.normalizer']
+
+    App\Serializer\ValidationExceptionNormalizer:
+        tags: ['serializer.normalizer']
+
+    App\Factory\NormalizerFactory:
+        arguments: [!tagged serializer.normalizer]
+        public: true
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
