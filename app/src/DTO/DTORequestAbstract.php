@@ -27,6 +27,7 @@ class DTORequestAbstract implements RequestDTOInterface
                 $entity->{$methodName}($value);
             }
         }
+        $this->entity = $entity;
 
         return $entity;
     }

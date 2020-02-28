@@ -38,7 +38,7 @@ class RegisterDTORequest extends DTORequestAbstract
     public $telephone;
 
     /**
-     * @Assert\Choice(choices=App\Entity\User::POSSIBLE_ROLES)
+     * @Assert\Choice(choices=App\Entity\User::POSSIBLE_ROLES, multiple = true)
      */
     public $roles = [];
 
@@ -55,10 +55,7 @@ class RegisterDTORequest extends DTORequestAbstract
     /**
      * @var string The hashed password
      * @Assert\NotNull
-     * @Assert\Length(
-     *      min = 6,
-     *      max = 50
-     * )
+     * @Assert\EqualTo(propertyPath = "password")
      */
     public $password_confirmation;
 
