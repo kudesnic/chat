@@ -33,7 +33,6 @@ class AppCustomAuthenticator extends AbstractFormLoginAuthenticator implements A
     private $validator;
     private $jWTManager;
 
-
     public function __construct(
         EntityManagerInterface $entityManager,
         UrlGeneratorInterface $urlGenerator,
