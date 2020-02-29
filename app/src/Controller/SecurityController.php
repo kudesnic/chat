@@ -24,7 +24,8 @@ class SecurityController extends AbstractController
     {
         $user = new User();
         $entity = $request->populateEntity($user);
-        $entity->setPassword($encoder->encodePassword($entity, $request->password));
+        $encodedPassword = $encoder->encodePassword($entity, $request->password);
+        $entity->setPassword($encodedPassword);
         $em->persist($entity);
         $em->flush($entity);
 
