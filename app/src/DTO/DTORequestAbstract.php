@@ -8,9 +8,12 @@ class DTORequestAbstract implements RequestDTOInterface
 {
     protected $data;
     protected $entity;
+    protected $request;
 
     public function __construct(Request $request)
     {
+        $this->request = $request;
+
         $this->data = json_decode($request->getContent(), true);
         foreach ($this->data as $key => $value){
             $this->{$key} = $value;
@@ -35,5 +38,10 @@ class DTORequestAbstract implements RequestDTOInterface
     public function getEntity()
     {
         return $this->entity;
+    }
+
+    public function getRequest()
+    {
+        return $this->request;
     }
 }

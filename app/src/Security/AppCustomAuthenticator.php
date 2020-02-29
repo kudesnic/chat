@@ -6,6 +6,7 @@ use App\Entity\Login;
 use App\Entity\User;
 use App\Exception\FormException;
 use App\Exception\ValidationException;
+use App\Http\ApiResponse;
 use Doctrine\ORM\EntityManagerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -107,7 +108,7 @@ class AppCustomAuthenticator extends AbstractFormLoginAuthenticator implements A
 
         $token = $this->jWTManager->create($user);
 
-        return new JsonResponse(['token' => $token]);
+        return new ApiResponse(['token' => $token]);
     }
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception)
     {

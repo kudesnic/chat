@@ -12,7 +12,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\Routing\Annotation\Route;
-
+use Symfony\Component\Security\Guard\AuthenticatorInterface;
+use Symfony\Component\Security\Guard\GuardAuthenticatorHandler;
 
 class SecurityController extends AbstractController
 {
@@ -20,8 +21,14 @@ class SecurityController extends AbstractController
     /**
      * @Route("/register", name="app_register", methods={"POST"})
      */
-    public function register(RegisterDTORequest $request, EntityManagerInterface $em, UserPasswordEncoderInterface $encoder)
-    {
+    public function register(
+        RegisterDTORequest $request, 
+        EntityManagerInterface $em,
+        UserPasswordEncoderInterface $encoder,
+        GuardAuthenticatorHandler $guard,
+        AuthenticatorInterface $authenticator
+        )
+        {
         $user = new User();
         $entity = $request->populateEntity($user);
         $encodedPassword = $encoder->encodePassword($entity, $request->password);
@@ -29,6 +36,15 @@ class SecurityController extends AbstractController
         $em->persist($entity);
         $em->flush($entity);
 
+        $handler = $guard->authenticateUserAndHandleSuccess(
+                    $entity,
+                    $request->getRequest(),
+                    $authenticator,
+                    'main'
+                );
+
+        $result = $handler;
+dd($result);
         return new ApiResponse('', $entity);
     }
 
