@@ -1,15 +1,20 @@
 <?php
 namespace App\DTO;
 
+use App\Entity\User;
+use App\Repository\UserRepository;
+use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Validator\Constraints as Assert;
-
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 class RegisterDTORequest extends DTORequestAbstract
 {
     /**
-     * @Assert\Email
      * @Assert\NotNull
+     * @Assert\Email
      */
     public $email;
 
@@ -38,7 +43,6 @@ class RegisterDTORequest extends DTORequestAbstract
     public $telephone;
 
     /**
-     * @Assert\Choice(choices=App\Entity\User::POSSIBLE_ROLES, multiple = true)
      */
     public $roles = [];
 
@@ -59,6 +63,12 @@ class RegisterDTORequest extends DTORequestAbstract
      */
     public $password_confirmation;
 
-
+    /**
+     * @Assert\Callback
+     */
+    public function checkEmailUniqness(ExecutionContextInterface $context, $payload)
+    {
+        dd($this->container->get('doctrine'));
+    }
 
 }

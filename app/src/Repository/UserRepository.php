@@ -46,6 +46,18 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
         $this->_em->flush();
         return $token;
     }
+    /**
+     * Checks whether email valid or not
+     *
+     * @param [type] $email
+     * @return boolean
+     */
+    public function isEmailUnique($email):bool
+    {
+        $count = $this->count(['email' => $email]);
+    
+        return (bool)$count;
+    }
     // /**
     //  * @return Users[] Returns an array of Users objects
     //  */

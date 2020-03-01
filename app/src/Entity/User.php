@@ -24,52 +24,32 @@ class User implements UserInterface
 
 
     /**
-     * @Assert\Email
-     * @Assert\NotNull
      * @ORM\Column(type="string", length=180, unique=true)
      */
     private $email;
 
     /**
-     * @Assert\Image(
-     *     minWidth = 200,
-     *     maxWidth = 6000,
-     *     minHeight = 200,
-     *     maxHeight = 6000
-     * )
      * @ORM\Column(type="string", length=255, nullable=true)
      */
     private $img;
 
     /**
-     * @Assert\NotNull
-     * @Assert\Length(
-     *      min = 2,
-     *      max = 50
-     * )
      * @ORM\Column(type="string", length=255)
      */
     private $name;
 
     /**
-     * @Assert\Regex("/^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/")
      * @ORM\Column(type="string", length=15, nullable=true)
      */
     private $telephone;
 
     /**
-     * @Assert\Choice(choices=User::POSSIBLE_ROLES)
      * @ORM\Column(type="json", nullable=true)
      */
     private $roles = [];
 
     /**
      * @var string The hashed password
-     * @Assert\NotNull
-     * @Assert\Length(
-     *      min = 6,
-     *      max = 50
-     * )
      * @ORM\Column(type="string")
      */
     private $password;

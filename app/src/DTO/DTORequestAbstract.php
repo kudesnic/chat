@@ -26,7 +26,7 @@ class DTORequestAbstract implements RequestDTOInterface
         foreach ($this->data as $key => $value){
             $propertyName = $nameConverter->denormalize($key);
             $methodName = 'set' . $propertyName;
-            if(method_exists($entity, $methodName)){
+            if(method_exists($entity, $methodName) && property_exists($this, $propertyName)){
                 $entity->{$methodName}($value);
             }
         }
