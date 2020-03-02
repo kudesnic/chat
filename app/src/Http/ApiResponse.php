@@ -45,7 +45,6 @@ class ApiResponse extends JsonResponse
             'message' => $message,
             'data'    => $data,
         ];
-
         if ($errors) {
             $response['errors'] = $errors;
         }
