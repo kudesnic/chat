@@ -22,13 +22,12 @@ class SecurityController extends AbstractController
      * @Route("/register", name="app_register", methods={"POST"})
      */
     public function register(
-        RegisterDTORequest $request, 
+        RegisterDTORequest $request,
         EntityManagerInterface $em,
         UserPasswordEncoderInterface $encoder,
         GuardAuthenticatorHandler $guard,
         AuthenticatorInterface $authenticator
-        )
-        {
+    ) {
         $user = new User();
         $entity = $request->populateEntity($user);
         $encodedPassword = $encoder->encodePassword($entity, $request->password);
@@ -36,16 +35,14 @@ class SecurityController extends AbstractController
         $em->persist($entity);
         $em->flush($entity);
 
-        $handler = $guard->authenticateUserAndHandleSuccess(
-                    $entity,
-                    $request->getRequest(),
-                    $authenticator,
-                    'main'
-                );
+        $response = $guard->authenticateUserAndHandleSuccess(
+            $entity,
+            $request->getRequest(),
+            $authenticator,
+            'main'
+        );
 
-        $result = $handler;
-dd($result);
-        return new ApiResponse('', $entity);
+        return $response;
     }
 
     /**

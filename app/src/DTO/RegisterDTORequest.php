@@ -9,12 +9,17 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
+use App\Validator as CustomValidators;
 
 class RegisterDTORequest extends DTORequestAbstract
 {
     /**
      * @Assert\NotNull
      * @Assert\Email
+     * @CustomValidators\UniqueValueInEntity(
+     *     entityClass = User::class,
+     *     field = "email"
+     * )
      */
     public $email;
 
@@ -62,13 +67,5 @@ class RegisterDTORequest extends DTORequestAbstract
      * @Assert\EqualTo(propertyPath = "password")
      */
     public $password_confirmation;
-
-    /**
-     * @Assert\Callback
-     */
-    public function checkEmailUniqness(ExecutionContextInterface $context, $payload)
-    {
-        dd($this->container->get('doctrine'));
-    }
 
 }

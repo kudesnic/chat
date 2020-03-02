@@ -8,28 +8,34 @@ class ApiResponse extends JsonResponse
     /**
      * ApiResponse constructor.
      *
-     * @param string $message
-     * @param mixed  $data
+     * @param mixed|null  $data
+     * @param string|null $message
      * @param array  $errors
      * @param int    $status
      * @param array  $headers
      * @param bool   $json
      */
-    public function __construct(string $message, $data = null, array $errors = [], int $status = 200, array $headers = [], bool $json = false)
-    {
-        parent::__construct($this->format($message, $data, $errors), $status, $headers, $json);
+    public function __construct(
+        $data = null,
+        string $message = null,
+        array $errors = [],
+        int $status = 200,
+        array $headers = [],
+        bool $json = false
+    ) {
+        parent::__construct($this->format($data, $message, $errors), $status, $headers, $json);
     }
 
     /**
      * Format the API response.
      *
-     * @param string $message
-     * @param mixed  $data
+     * @param mixed|null  $data
+     * @param string|null $message
      * @param array  $errors
      *
      * @return array
      */
-    private function format(string $message, $data = null, array $errors = [])
+    private function format($data = null, string $message = null, array $errors = [])
     {
         if ($data === null) {
             $data = new \ArrayObject();

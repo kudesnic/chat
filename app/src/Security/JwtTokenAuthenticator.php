@@ -2,7 +2,11 @@
 namespace App\Security;
 
 use App\Entity\Users;
+use App\Http\ApiResponse;
 use Doctrine\ORM\EntityManagerInterface;
+use Lexik\Bundle\JWTAuthenticationBundle\Encoder\JWTEncoderInterface;
+use Lexik\Bundle\JWTAuthenticationBundle\Exception\JWTDecodeFailureException;
+use Lexik\Bundle\JWTAuthenticationBundle\TokenExtractor\AuthorizationHeaderTokenExtractor;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -18,11 +22,11 @@ class JwtTokenAuthenticator extends AbstractGuardAuthenticator
     private $jwtEncoder;
     private $em;
 
-//    public function __construct(JWTEncoderInterface $jwtEncoder, EntityManagerInterface $em)
-//    {
-//        $this->jwtEncoder = $jwtEncoder;
-//        $this->em = $em;
-//    }
+    public function __construct(JWTEncoderInterface $jwtEncoder, EntityManagerInterface $em)
+    {
+        $this->jwtEncoder = $jwtEncoder;
+        $this->em = $em;
+    }
 
     /**
      * Called on every request to decide if this authenticator should be
@@ -42,34 +46,34 @@ class JwtTokenAuthenticator extends AbstractGuardAuthenticator
      */
     public function getCredentials(Request $request)
     {
-//        $extractor = new AuthorizationHeaderTokenExtractor(
-//            'Bearer',
-//            'Authorization'
-//        );
-//        $token = $extractor->extract($request);
-//        if (!$token) {
-//            return;
-//        }
-//
-//        return $token;
+        $extractor = new AuthorizationHeaderTokenExtractor(
+            'Bearer',
+            'Authorization'
+        );
+        $token = $extractor->extract($request);
+        if (!$token) {
+            return;
+        }
+
+        return $token;
     }
 
     public function getUser($credentials, UserProviderInterface $userProvider)
     {
-//        try {
-//            $data = $this->jwtEncoder->decode($credentials);
-//        } catch (JWTDecodeFailureException $e) {
-//            // if you want to, use can use $e->getReason() to find out which of the 3 possible things went wrong
-//            // and tweak the message accordingly
-//            // https://github.com/lexik/LexikJWTAuthenticationBundle/blob/05e15967f4dab94c8a75b275692d928a2fbf6d18/Exception/JWTDecodeFailureException.php
-//
-//            throw new CustomUserMessageAuthenticationException('Invalid Token');
-//        }
-//
-//        $email = $data['email'];
-//        return $this->em
-//            ->getRepository('AppBundle:Users')
-//            ->findOneBy(['email' => $email]);
+        try {
+            $data = $this->jwtEncoder->decode($credentials);
+        } catch (JWTDecodeFailureException $e) {
+            // if you want to, use can use $e->getReason() to find out which of the 3 possible things went wrong
+            // and tweak the message accordingly
+            // https://github.com/lexik/LexikJWTAuthenticationBundle/blob/05e15967f4dab94c8a75b275692d928a2fbf6d18/Exception/JWTDecodeFailureException.php
+
+            throw new CustomUserMessageAuthenticationException('Invalid Token');
+        }
+
+        $email = $data['email'];
+        return $this->em
+            ->getRepository('AppBundle:Users')
+            ->findOneBy(['email' => $email]);
     }
 
     public function checkCredentials($credentials, UserInterface $user)
@@ -105,12 +109,7 @@ class JwtTokenAuthenticator extends AbstractGuardAuthenticator
      */
     public function start(Request $request, AuthenticationException $authException = null)
     {
-        $data = [
-            // you might translate this message
-            'message' => 'Authentication Required'
-        ];
-
-        return new JsonResponse($data, Response::HTTP_UNAUTHORIZED);
+        return new ApiResponse(null, 'Authentication Required', null, Response::HTTP_UNAUTHORIZED);
     }
 
     public function supportsRememberMe()

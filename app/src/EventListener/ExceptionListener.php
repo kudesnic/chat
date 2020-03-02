@@ -55,6 +55,6 @@ class ExceptionListener
             $errors = [];
         }
 
-        return new ApiResponse($exception->getMessage(), null, $errors, $statusCode);
+        return new ApiResponse([], $exception->getMessage(), $errors, $statusCode);
     }
 }

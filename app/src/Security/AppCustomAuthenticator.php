@@ -105,7 +105,7 @@ class AppCustomAuthenticator extends AbstractFormLoginAuthenticator implements A
         $user = $token->getUser();
         $user->setPassword('Suck_my_dick');
         $user->setEmail('Suck-my-dick3412@gmail.com');
-
+        $user->tokenExpirationDate = time() + 3600000*7;
         $token = $this->jWTManager->create($user);
 
         return new ApiResponse(['token' => $token]);
