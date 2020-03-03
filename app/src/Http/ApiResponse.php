@@ -1,7 +1,14 @@
 <?php
 namespace App\Http;
 
+use Doctrine\Common\Annotations\AnnotationReader;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
+use Symfony\Component\Serializer\Mapping\Loader\AnnotationLoader;
+use Symfony\Component\Serializer\NameConverter\CamelCaseToSnakeCaseNameConverter;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
+use Symfony\Component\Serializer\Normalizer\PropertyNormalizer;
+use Symfony\Component\Serializer\Serializer;
 
 class ApiResponse extends JsonResponse
 {
@@ -40,6 +47,13 @@ class ApiResponse extends JsonResponse
         if ($data === null) {
             $data = new \ArrayObject();
         }
+        $classMetadataFactory = new ClassMetadataFactory(new AnnotationLoader(new AnnotationReader()));
+        ;
+        $nameConverter = new CamelCaseToSnakeCaseNameConverter();
+        $normalizer = new PropertyNormalizer($classMetadataFactory, $nameConverter);
+        $serializer = new Serializer([$normalizer]);
+        //select only properties with @Groups("APIGroup") annotation
+        $data = $serializer->normalize($data, null, ['groups' => 'APIGroup']);
 
         $response = [
             'message' => $message,

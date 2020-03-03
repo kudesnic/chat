@@ -7,6 +7,7 @@ use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 use Doctrine\ORM\Mapping\Table;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
@@ -16,6 +17,7 @@ class User implements UserInterface
 {
     const POSSIBLE_ROLES = ['ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_MANAGER' ];
     /**
+     * @Groups("APIGroup")
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
@@ -24,26 +26,31 @@ class User implements UserInterface
 
 
     /**
+     * @Groups("APIGroup")
      * @ORM\Column(type="string", length=180, unique=true)
      */
     private $email;
 
     /**
+     * @Groups("APIGroup")
      * @ORM\Column(type="string", length=255, nullable=true)
      */
     private $img;
 
     /**
+     * @Groups("APIGroup")
      * @ORM\Column(type="string", length=255)
      */
     private $name;
 
     /**
+     * @Groups("APIGroup")
      * @ORM\Column(type="string", length=15, nullable=true)
      */
     private $telephone;
 
     /**
+     * @Groups("APIGroup")
      * @ORM\Column(type="json", nullable=true)
      */
     private $roles = [];
