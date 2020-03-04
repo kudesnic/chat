@@ -20,6 +20,14 @@ class SecurityController extends AbstractController
 
     /**
      * @Route("/register", name="app_register", methods={"POST"})
+     *
+     * @param RegisterDTORequest $request
+     * @param EntityManagerInterface $em
+     * @param UserPasswordEncoderInterface $encoder
+     * @param GuardAuthenticatorHandler $guard
+     * @param AuthenticatorInterface $authenticator
+     *
+     * @return null|\Symfony\Component\HttpFoundation\Response
      */
     public function register(
         RegisterDTORequest $request,
@@ -44,9 +52,23 @@ class SecurityController extends AbstractController
 
         return $response;
     }
-
+    /**
+     * @Route("/login", name="login", methods={"POST"})
+     */
+    public function login(Request $request, EntityManagerInterface $em)
+    {
+        $data = json_decode($request->getContent(), true);
+        $user = $em->getRepository(User::class)
+            ->findOneBy(['email' => $data['email']]);
+        return $this->json([
+            'email' => $user->getEmail(),
+            'roles' => $user->getRoles(),
+        ]);
+    }
     /**
      * @Route("/logout", name="app_logout")
+     *
+     * @throws \Exception
      */
     public function logout()
     {

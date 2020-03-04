@@ -34,8 +34,6 @@ services:
     App\Serializer\ValidationExceptionNormalizer:
         tags: ['serializer.normalizer']
 
-    Symfony\Component\Security\Guard\AuthenticatorInterface: '@App\Security\AppCustomAuthenticator'
-
     App\Factory\NormalizerFactory:
         arguments: [!tagged serializer.normalizer]
         public: true

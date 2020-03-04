@@ -9,7 +9,13 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Symfony\Component\Security\Core\Exception\AuthenticationException;
 
+/**
+ * Class UserController
+ * @package App\Controller
+ */
 class UserController extends AbstractController
 {
     /**
@@ -30,6 +36,21 @@ class UserController extends AbstractController
      */
     public function show(User $user)
     {
+        return new ApiResponse($user);
+    }
+
+    /**
+     * @Route("/user/{id}", name="user_delete", requirements={"id":"\d+"},  methods={"DELETE"})
+     * @ParamConverter("id", class="App\Entity\User", options={"id": "id"})
+     * @IsGranted("ROLE_ADMIN")
+     */
+    public function destroy(User $user)
+    {
+        $user = $this->getUser();
+        if($user->getId() == $user->getId()){
+            throw new AuthenticationException('You can not delete yourself');
+        }
+
         return new ApiResponse($user);
     }
 }

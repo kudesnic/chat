@@ -66,7 +66,6 @@ class User implements UserInterface
      */
     private $apiToken;
 
-
     public function getId(): ?int
     {
         return $this->id;
