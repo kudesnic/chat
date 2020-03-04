@@ -19,7 +19,7 @@
 									"var data = JSON.parse(responseBody);",
 									"console.log(data);",
 									"postman.setEnvironmentVariable(\"token\", data.token);",
-									""
+									"postman.setEnvironmentVariable(\"refresh_token\", data.refresh_token);"
 								],
 								"type": "text/javascript"
 							}
@@ -42,7 +42,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"email\":\"andrey@gmail.com\",\n\t\"password\":\"123456a\"\n}",
+							"raw": "{\n\t\"email\":\"andrey3332@gmial.com\",\n\t\"password\":\"199216a\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -83,7 +83,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"email\":\"andrey@gmail.com\",\n\t\"name\":\"andrey\",\n\t\"password\":\"123456a\",\n\t\"password_confirmation\":\"123456a\"\n}",
+							"raw": "{\n\t\"email\":\"andrey.derev2iank22o2@gmial.com\",\n\t\"password\":\"199216a\",\n\t\t\"password_confirmation\":\"199216a\",\n\t\t\"name\":\"Andrey test\",\n\t\t\"roles\":[\"ROLE_ADMIN\"]\n\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -100,6 +100,151 @@
 							"path": [
 								"api",
 								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "REFRESH TOKEN",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "243d6461-7e93-444c-b170-4f367d7e7b0f",
+								"exec": [
+									"var data = JSON.parse(responseBody);",
+									"console.log(data);",
+									"postman.setEnvironmentVariable(\"token\", data.token);",
+									"postman.setEnvironmentVariable(\"refresh_token\", data.refresh_token);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "refresh_token",
+									"value": "{{refresh_token}}",
+									"type": "text"
+								},
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "text"
+								}
+							],
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8008/api/token/refresh",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8008",
+							"path": [
+								"api",
+								"token",
+								"refresh"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "Users",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Accept",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8008/api/user?page=1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8008",
+							"path": [
+								"api",
+								"user"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Users View",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Accept",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8008/api/user/2",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8008",
+							"path": [
+								"api",
+								"user",
+								"2"
 							]
 						}
 					},
