@@ -19,11 +19,13 @@ class UserFixtures extends Fixture
 
     public function load(ObjectManager $manager)
     {
-        $user = new EntityUser();
-        $user->setEmail('andrey@gmail.com');
-        $user->setPassword($this->encoder->encodePassword($user, '12345678a'));
-        $user->setName('Andrey');
-        $manager->persist($user);
-        $manager->flush();
+        for($i=0; $i<65; $i++){
+            $user = new EntityUser();
+            $user->setEmail('andrey' . $i . '@gmail.com');
+            $user->setPassword($this->encoder->encodePassword($user, '12345678a'));
+            $user->setName('Andrey');
+            $manager->persist($user);
+            $manager->flush();
+        }
     }
 }
