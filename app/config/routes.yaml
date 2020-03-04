@@ -1,9 +1,6 @@
 #index:
 #    path: /
 #    controller: App\Controller\DefaultController::index
-app_login:
-  path: /api/login
-  methods:  [POST]
 
 gesdinet_jwt_refresh_token:
   path:       /api/token/refresh

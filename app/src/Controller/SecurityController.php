@@ -7,9 +7,17 @@ use App\Entity\User;
 use App\Exception\ValidationException;
 use App\Http\ApiResponse;
 use Doctrine\ORM\EntityManagerInterface;
+use Lexik\Bundle\JWTAuthenticationBundle\Events;
+use Lexik\Bundle\JWTAuthenticationBundle\Security\Http\Authentication\AuthenticationSuccessHandler;
+use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTManager;
+use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
+use Symfony\Component\Security\Core\Event\AuthenticationSuccessEvent;
+use Symfony\Component\Security\Http\Authentication\AuthenticationSuccessHandlerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Guard\AuthenticatorInterface;
@@ -33,8 +41,7 @@ class SecurityController extends AbstractController
         RegisterDTORequest $request,
         EntityManagerInterface $em,
         UserPasswordEncoderInterface $encoder,
-        GuardAuthenticatorHandler $guard,
-        AuthenticatorInterface $authenticator
+        AuthenticationSuccessHandler $authHandler
     ) {
         $user = new User();
         $entity = $request->populateEntity($user);
@@ -42,13 +49,9 @@ class SecurityController extends AbstractController
         $entity->setPassword($encodedPassword);
         $em->persist($entity);
         $em->flush($entity);
+        $response = $authHandler->handleAuthenticationSuccess($entity);
 
-        $response = $guard->authenticateUserAndHandleSuccess(
-            $entity,
-            $request->getRequest(),
-            $authenticator,
-            'main'
-        );
+
 
         return $response;
     }
