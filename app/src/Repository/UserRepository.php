@@ -3,10 +3,9 @@
 namespace App\Repository;
 
 use App\Entity\User;
-use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Common\Persistence\ManagerRegistry;
+use Gedmo\Tree\Entity\Repository\NestedTreeRepository;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
-use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -17,13 +16,23 @@ use Symfony\Component\Security\Core\User\UserInterface;
  * @method User[]    findAll()
  * @method User[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
-class UserRepository extends ServiceEntityRepository implements PasswordUpgraderInterface
+class UserRepository extends  NestedTreeRepository implements PasswordUpgraderInterface
 {
-    public function __construct(ManagerRegistry $registry)
-    {
-        parent::__construct($registry, User::class);
-    }
 
+    /**
+     * Get nested set children nodes in boundaries of limit and offset
+     *
+     * @param $node
+     * @param array|null $orderBy
+     * @param null $limit
+     * @param null $offset
+     */
+    public function findChildrenBy($node, array $orderBy = null, $limit = null, $offset = null)
+    {
+        $qb = $this->getChildrenQueryBuilder($node, false, key($orderBy), array_shift($orderBy));
+        $qb->setMaxResults($limit)->setFirstResult($offset);
+
+    }
     /**
      * Used to upgrade (rehash) the user's password automatically over time.
      */

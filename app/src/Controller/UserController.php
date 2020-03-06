@@ -4,13 +4,14 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Http\ApiResponse;
+use App\Service\JWTUserHolder;
 use App\Service\PaginationManger;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Routing\Annotation\Route;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
-use Symfony\Component\Security\Core\Exception\AuthenticationException;
 
 /**
  * Class UserController
@@ -21,12 +22,15 @@ class UserController extends AbstractController
     /**
      * @Route("/user", name="user_list",  defaults={"page": 1},  methods={"GET"})
      */
-    public function index(PaginationManger $paginationManger, Request $request)
+    public function index(Request $request, PaginationManger $paginationManger, JWTUserHolder $userHolder)
     {
         $page = $request->query->get('page');
-        $result = $paginationManger->setRepository(User::class)
-            ->paginate([], ['name' => 'asc'], $page);
+        $user = $userHolder->getUser($request);
+//        $result = $paginationManger->setRepository(User::class)->paginateNodeChildren($user, ['name' => 'asc'], $page);
+        $result = $paginationManger->setRepository(User::class)->getRepository()->children($user);
 
+//        $result = $paginationManger->setRepository(User::class)
+//            ->paginate([], ['name' => 'asc'], $page);
         return new ApiResponse($result);
     }
 

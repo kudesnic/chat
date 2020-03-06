@@ -4,6 +4,7 @@ namespace App\Service;
 
 
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Persistence\ObjectRepository;
 use Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface;
 use Symfony\Component\Serializer\NameConverter\CamelCaseToSnakeCaseNameConverter;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
@@ -48,6 +49,18 @@ class PaginationManger
     }
 
     /**
+     * gets the repository for a class.
+     *
+     * @param string $className
+     *
+     * @return self
+     */
+    public function getRepository():ObjectRepository
+    {
+        return $this->repository;
+    }
+
+    /**
      * Builds pagination array
      *
      * @param array $criteria
@@ -64,6 +77,29 @@ class PaginationManger
         }
         $this->setCalculatedParams($criteria);
         $rows = $this->repository->findBy($criteria, $orderBy, $this->perPage, $this->offset);
+
+        return $this->buildPagination($rows);
+
+    }
+
+    /**
+     * Builds pagination array for nested set nodes
+     *
+     * @param $node
+     * @param array $criteria
+     * @param array|null $orderBy
+     * @param int|null $page
+     * @param int|null $perPage
+     * @return array
+     */
+    public function paginateNodeChildren($node, ?array $orderBy = null, ?int $page = null,  ?int $perPage = null)
+    {
+        $this->setCurrentPage($page);
+        if(is_null($perPage) == false){
+            $this->perPage = $perPage;
+        }
+        $this->setCalculatedParams([]);
+        $rows = $this->repository->findChildrenBy($node, $orderBy, $this->perPage, $this->offset);
 
         return $this->buildPagination($rows);
 
@@ -102,7 +138,12 @@ class PaginationManger
 
     }
 
-    private function buildPagination(array $rows)
+    /**
+     * @param array|null $rows
+     * @return array
+     * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
+     */
+    private function buildPagination(?array $rows)
     {
         if($this->normalize){
             $classMetadataFactory = null;
