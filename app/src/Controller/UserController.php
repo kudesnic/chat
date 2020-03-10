@@ -2,10 +2,12 @@
 
 namespace App\Controller;
 
+use App\DTO\UserStoreDTORequest;
 use App\Entity\User;
 use App\Http\ApiResponse;
 use App\Service\JWTUserHolder;
 use App\Service\PaginationManger;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
@@ -26,8 +28,8 @@ class UserController extends AbstractController
     {
         $page = $request->query->get('page');
         $user = $userHolder->getUser($request);
-//        $result = $paginationManger->setRepository(User::class)->paginateNodeChildren($user, ['name' => 'asc'], $page);
-        $result = $paginationManger->setRepository(User::class)->getRepository()->children($user);
+        $result = $paginationManger->setRepository(User::class)->paginateNodeChildren($user, ['name' => 'asc'], $page);
+//        $result = $paginationManger->setRepository(User::class)->getRepository()->children($user);
 
 //        $result = $paginationManger->setRepository(User::class)
 //            ->paginate([], ['name' => 'asc'], $page);
@@ -41,6 +43,21 @@ class UserController extends AbstractController
     public function show(User $user)
     {
         return new ApiResponse($user);
+    }
+
+    /**
+     * @Route("/user", name="user_store", methods={"POST"})
+     */
+    public function store(UserStoreDTORequest $request, EntityManagerInterface $em, JWTUserHolder $userHolder)
+    {
+        $user = $userHolder->getUser($request->getRequest());
+        $userEntity = new User();
+        $userEntity = $request->populateEntity($userEntity);
+        $userEntity->setParent($user);
+        $em->persist($userEntity);
+        $em->flush($userEntity);
+
+        return new ApiResponse([]);
     }
 
     /**

@@ -3,7 +3,6 @@
 namespace App\Repository;
 
 use App\Entity\User;
-use Doctrine\Common\Persistence\ManagerRegistry;
 use Gedmo\Tree\Entity\Repository\NestedTreeRepository;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
@@ -30,7 +29,7 @@ class UserRepository extends  NestedTreeRepository implements PasswordUpgraderIn
     public function findChildrenBy($node, array $orderBy = null, $limit = null, $offset = null)
     {
         $qb = $this->getChildrenQueryBuilder($node, false, key($orderBy), array_shift($orderBy));
-        $qb->setMaxResults($limit)->setFirstResult($offset);
+        return $qb->setMaxResults($limit)->setFirstResult($offset)->getQuery()->execute();
 
     }
     /**
