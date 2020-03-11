@@ -28,11 +28,9 @@ class UserController extends AbstractController
     {
         $page = $request->query->get('page');
         $user = $userHolder->getUser($request);
-        $result = $paginationManger->setRepository(User::class)->paginateNodeChildren($user, ['name' => 'asc'], $page);
-//        $result = $paginationManger->setRepository(User::class)->getRepository()->children($user);
+        $result = $paginationManger->setRepository(User::class)
+            ->paginateNodeChildren($user, ['name' => 'asc'], $page);
 
-//        $result = $paginationManger->setRepository(User::class)
-//            ->paginate([], ['name' => 'asc'], $page);
         return new ApiResponse($result);
     }
 
@@ -57,17 +55,19 @@ class UserController extends AbstractController
         $em->persist($userEntity);
         $em->flush($userEntity);
 
-        return new ApiResponse([]);
+        return new ApiResponse($userEntity);
     }
 
     /**
      * @Route("/user/{id}", name="user_delete", requirements={"id":"\d+"},  methods={"DELETE"})
      * @ParamConverter("id", class="App\Entity\User", options={"id": "id"})
-     * @IsGranted("ROLE_ADMIN")
      */
-    public function destroy(User $user)
+    public function destroy(User $user, Request $request, JWTUserHolder $userHolder, EntityManagerInterface $em)
     {
-        $user = $this->getUser();
+        $userOwner = $userHolder->getUser($request);
+
+        $siblings = $em->getRepository(User::class)
+            ->getChildren($user);
         if($user->getId() == $user->getId()){
             throw new AuthenticationException('You can not delete yourself');
         }
