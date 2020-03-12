@@ -2,11 +2,13 @@
 
 namespace App\EventListener;
 
-    use App\Factory\NormalizerFactory;
-    use App\Http\ApiResponse;
-    use Symfony\Component\HttpFoundation\Response;
-    use Symfony\Component\HttpKernel\Event\ExceptionEvent;
-    use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
+use App\Exception\ValidationExceptionInterface;
+use App\Factory\NormalizerFactory;
+use App\Http\ApiResponse;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Event\ExceptionEvent;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ExceptionListener
 {
@@ -32,7 +34,9 @@ class ExceptionListener
     {
         $exception = $event->getThrowable();
         $request   = $event->getRequest();
-        if (in_array('application/json', $request->getAcceptableContentTypes())) {
+        if (in_array('application/json', $request->getAcceptableContentTypes())
+            && ($exception instanceof ValidationExceptionInterface || $exception instanceof NotFoundHttpException)
+        ){
             $response = $this->createApiResponse($exception);
             $event->setResponse($response);
         }

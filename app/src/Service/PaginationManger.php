@@ -90,16 +90,17 @@ class PaginationManger
      * @param array|null $orderBy
      * @param int|null $page
      * @param int|null $perPage
+     * @param bool $directChildren
      * @return array
      */
-    public function paginateNodeChildren($node, ?array $orderBy = null, ?int $page = null,  ?int $perPage = null)
+    public function paginateNodeChildren($node, ?array $orderBy = null, ?int $page = null,  ?int $perPage = null, bool $directChildren = false)
     {
         $this->setCurrentPage($page);
         if(is_null($perPage) == false){
             $this->perPage = $perPage;
         }
         $this->setCalculatedParams([]);
-        $rows = $this->repository->findChildrenBy($node, $orderBy, $this->perPage, $this->offset);
+        $rows = $this->repository->findChildrenBy($node, $orderBy, $this->perPage, $this->offset, $directChildren );
 
         return $this->buildPagination($rows);
 

@@ -87,6 +87,11 @@ class User implements UserInterface
     private $rgt;
 
     /**
+     * @ORM\Column(name="tree_root", type="integer")
+     */
+    private $tree_root;
+
+    /**
      * @Gedmo\TreeRoot
      * @ORM\ManyToOne(targetEntity="User")
      * @ORM\JoinColumn(name="tree_root", referencedColumnName="id", onDelete="CASCADE")
@@ -246,6 +251,26 @@ class User implements UserInterface
         $this->apiToken = $apiToken;
 
         return $this;
+    }
+
+    public function getLft(): int
+    {
+        return $this->lft;
+    }
+
+    public function getRgt(): int
+    {
+        return $this->rgt;
+    }
+
+    public function getTreeRoot(): int
+    {
+        return $this->tree_root;
+    }
+
+    public function getLvl(): int
+    {
+        return $this->lvl;
     }
 
     public function getRoot()

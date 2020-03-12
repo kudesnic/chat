@@ -7,7 +7,7 @@ use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
 
-class ValidationException extends HttpException
+class ValidationException extends HttpException implements ValidationExceptionInterface
 {
     /**
      * @var FormInterface
@@ -46,7 +46,7 @@ class ValidationException extends HttpException
     }
 
     /**
-     * @return FormErrorIterator
+     * @return ConstraintViolationListInterface
      */
     public function getErrors()
     {

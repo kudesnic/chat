@@ -25,12 +25,43 @@ class UserRepository extends  NestedTreeRepository implements PasswordUpgraderIn
      * @param array|null $orderBy
      * @param null $limit
      * @param null $offset
+     * @param false $directChildren
      */
-    public function findChildrenBy($node, array $orderBy = null, $limit = null, $offset = null)
+    public function findChildrenBy($node, ?array $orderBy = null, ?int $limit = null, ?int $offset = null, bool $directChildren = false)
     {
-        $qb = $this->getChildrenQueryBuilder($node, false, key($orderBy), array_shift($orderBy));
+        $qb = $this->getChildrenQueryBuilder($node, $directChildren, key($orderBy), array_shift($orderBy));
         return $qb->setMaxResults($limit)->setFirstResult($offset)->getQuery()->execute();
 
+    }
+
+    /**
+     * Checks whether parentNode is a siblings of a childNode or not
+     *
+     * @param $parentNode
+     * @param $childNode
+     * @return bool
+     * @throws \Doctrine\ORM\NoResultException
+     * @throws \Doctrine\ORM\NonUniqueResultException
+     */
+    public function isNodeAChild($parentNode, $childNode):bool
+    {
+        $qBuilder = $this->createQueryBuilder('tree_entity');
+        $count = $qBuilder
+            ->select('COUNT(tree_entity)')
+            ->where('tree_entity.lft > :lft')
+            ->andWhere('tree_entity.rgt <= :rgt')
+            ->andWhere('tree_entity.tree_root <= :tree_root')
+            ->andWhere('tree_entity.lvl > :level')
+            ->andWhere('tree_entity.id < :child_id')
+            ->setParameter('lft', $parentNode->getLft())
+            ->setParameter('rgt', $parentNode->getRgt())
+            ->setParameter('tree_root', $parentNode->getTreeRoot())
+            ->setParameter('child_id', $childNode->getId())
+            ->setParameter('level', $parentNode->getLvl())
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return (bool)$count;
     }
     /**
      * Used to upgrade (rehash) the user's password automatically over time.

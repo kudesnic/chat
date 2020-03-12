@@ -2,7 +2,7 @@
 
 namespace App\Controller;
 
-use App\DTO\RegisterDTORequest;
+use App\DTO\Another\RegisterDTORequest;
 use App\Entity\User;
 use App\Exception\ValidationException;
 use App\Http\ApiResponse;

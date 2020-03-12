@@ -1,6 +1,7 @@
 <?php
-namespace App\DTO;
+namespace App\DTO\Update;
 
+use App\DTO\DTORequestAbstract;
 use App\Entity\User;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManager;
@@ -11,10 +12,9 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 use App\Validator as CustomValidators;
 
-class RegisterDTORequest extends DTORequestAbstract
+class UserUpdateDTORequest extends DTORequestAbstract
 {
     /**
-     * @Assert\NotNull
      * @Assert\Email
      * @CustomValidators\UniqueValueInEntity(
      *     entityClass = User::class,
@@ -34,7 +34,6 @@ class RegisterDTORequest extends DTORequestAbstract
     public $img;
 
     /**
-     * @Assert\NotNull
      * @Assert\Length(
      *      min = 2,
      *      max = 50
@@ -50,22 +49,5 @@ class RegisterDTORequest extends DTORequestAbstract
     /**
      */
     public $roles = [];
-
-    /**
-     * @var string The hashed password
-     * @Assert\NotNull
-     * @Assert\Length(
-     *      min = 6,
-     *      max = 50
-     * )
-     */
-    public $password;
-
-    /**
-     * @var string The hashed password
-     * @Assert\NotNull
-     * @Assert\EqualTo(propertyPath = "password")
-     */
-    public $password_confirmation;
 
 }

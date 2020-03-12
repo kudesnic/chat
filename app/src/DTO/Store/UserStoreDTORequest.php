@@ -1,6 +1,7 @@
 <?php
-namespace App\DTO;
+namespace App\DTO\Store;
 
+use App\DTO\DTORequestAbstract;
 use App\Entity\User;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManager;

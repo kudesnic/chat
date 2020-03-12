@@ -1,15 +1,12 @@
 <?php
 
-
 namespace App\Exception;
-
 
 use Symfony\Component\Form\FormErrorIterator;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
-
-class FormException extends HttpException
+class FormException extends HttpException implements ValidationExceptionInterface
 {
     /**
      * @var FormInterface

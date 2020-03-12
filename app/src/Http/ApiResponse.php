@@ -44,11 +44,11 @@ class ApiResponse extends JsonResponse
      */
     private function format($data = null, string $message = null, array $errors = [])
     {
-        if ($data === null) {
+        if ($data === null){
             $data = new \ArrayObject();
         }
+
         $classMetadataFactory = new ClassMetadataFactory(new AnnotationLoader(new AnnotationReader()));
-        ;
         $nameConverter = new CamelCaseToSnakeCaseNameConverter();
         $normalizer = new PropertyNormalizer($classMetadataFactory, $nameConverter);
         $serializer = new Serializer([$normalizer]);
