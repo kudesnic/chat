@@ -38,6 +38,7 @@ class UserFixtures extends Fixture
             $user->setEmail('andrey' . $i . $treeKey . '@gmail.com');
             $user->setPassword($this->encoder->encodePassword($user, '12345678a'));
             $user->setName('Andrey');
+            $user->setIsActive(true);
             if(is_null($prev) == false){
                 $user->setParent($prev);
             }

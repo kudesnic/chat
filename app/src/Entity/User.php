@@ -64,9 +64,9 @@ class User implements UserInterface
     private $password;
 
     /**
-     * @ORM\Column(type="string", length=255, nullable=true)
+     * @ORM\Column(type="boolean")
      */
-    private $apiToken;
+    private $isActive;
 
     /**
      * @Gedmo\TreeLeft
@@ -87,7 +87,7 @@ class User implements UserInterface
     private $rgt;
 
     /**
-     * @ORM\Column(name="tree_root", type="integer")
+     * @ORM\Column(name="tree_root", type="integer", nullable=true)
      */
     private $tree_root;
 
@@ -241,14 +241,14 @@ class User implements UserInterface
         return $this;
     }
 
-    public function getApiToken(): ?string
+    public function getIsActive():bool
     {
-        return $this->apiToken;
+        return $this->isActive;
     }
 
-    public function setApiToken(string $apiToken): self
+    public function setIsActive(bool $isActive): self
     {
-        $this->apiToken = $apiToken;
+        $this->isActive = $isActive;
 
         return $this;
     }
