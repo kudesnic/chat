@@ -5,6 +5,7 @@ namespace App\EventListener;
 use App\Exception\ValidationExceptionInterface;
 use App\Factory\NormalizerFactory;
 use App\Http\ApiResponse;
+use Lexik\Bundle\JWTAuthenticationBundle\Exception\JWTDecodeFailureException;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
@@ -29,6 +30,7 @@ class ExceptionListener
 
     /**
      * @param ExceptionEvent $event
+     * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
      */
     public function onKernelException(ExceptionEvent $event)
     {
@@ -39,15 +41,22 @@ class ExceptionListener
         ){
             $response = $this->createApiResponse($exception);
             $event->setResponse($response);
+
+            //for some reasons JWTDecodeFailureException always has statusCode = 0 ...it is Hardcoded in JWT extension,
+            //we need 401
+        } elseif ($exception instanceof JWTDecodeFailureException && $exception->getCode() == 0)
+        {
+            $response = new ApiResponse([], $exception->getMessage(), [], 401);
+            $event->setResponse($response);
         }
     }
 
     /**
      * Creates the ApiResponse from any Exception
      *
-     * @param \Exception $exception
-     *
+     * @param $exception
      * @return ApiResponse
+     * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
      */
     private function createApiResponse( $exception)
     {

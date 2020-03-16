@@ -27,6 +27,8 @@ class SecurityController extends AbstractController
 {
 
     /**
+     * Register main user
+     *
      * @Route("/register", name="app_register", methods={"POST"})
      *
      * @param RegisterDTORequest $request
@@ -47,14 +49,14 @@ class SecurityController extends AbstractController
         $entity = $request->populateEntity($user);
         $encodedPassword = $encoder->encodePassword($entity, $request->password);
         $entity->setPassword($encodedPassword);
+        $entity->setIsActive(true);
         $em->persist($entity);
         $em->flush($entity);
         $response = $authHandler->handleAuthenticationSuccess($entity);
 
-
-
         return $response;
     }
+
     /**
      * @Route("/login", name="login", methods={"POST"})
      */
