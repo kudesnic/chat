@@ -2,7 +2,6 @@
 
 namespace App\Service;
 
-
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ObjectRepository;
 use Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface;
@@ -75,7 +74,8 @@ class PaginationManger
         if(is_null($perPage) == false){
             $this->perPage = $perPage;
         }
-        $this->setCalculatedParams($criteria);
+        $this->setTotal($criteria);
+        $this->setCalculatedParams();
         $rows = $this->repository->findBy($criteria, $orderBy, $this->perPage, $this->offset);
 
         return $this->buildPagination($rows);
@@ -99,6 +99,7 @@ class PaginationManger
         if(is_null($perPage) == false){
             $this->perPage = $perPage;
         }
+        $this->setTotalChildren($node, $directChildren);
         $this->setCalculatedParams([]);
         $rows = $this->repository->findChildrenBy($node, $orderBy, $this->perPage, $this->offset, $directChildren );
 
@@ -121,13 +122,31 @@ class PaginationManger
     }
 
     /**
-     * Sets such calculated params, such as total and pagesCount
+     * Count total
      *
      * @param $criteria
      */
-    private function setCalculatedParams($criteria)
+    private function setTotal($criteria)
     {
         $this->total = $this->repository->count($criteria);
+    }
+
+     /**
+     * Count total children for nested set node
+     *
+     * @param $criteria
+     */
+    private function setTotalChildren($node, bool $directChildren = false)
+    {
+        $this->total = $this->repository->countChildren($node, $directChildren);
+    }
+
+    /**
+     * Sets such calculated params, such as total and pagesCount
+     *
+     */
+    private function setCalculatedParams()
+    {
         //round up
         $this->pagesCount = ceil($this->total / $this->perPage);
 

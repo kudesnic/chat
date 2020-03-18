@@ -35,7 +35,7 @@ class UserController extends AbstractController
         $page = $request->query->get('page');
         $user = $userHolder->getUser($request);
         $result = $paginationManger->setRepository(User::class)
-            ->paginateNodeChildren($user, ['name' => 'asc'], $page, null, false);
+                ->paginateNodeChildren($user, ['name' => 'asc'], $page, null, false);
 
         return new ApiResponse($result);
     }

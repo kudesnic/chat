@@ -23,15 +23,37 @@ class UserRepository extends  NestedTreeRepository implements PasswordUpgraderIn
      *
      * @param $node
      * @param array|null $orderBy
-     * @param null $limit
-     * @param null $offset
+     * @param int|null $limit
+     * @param int|null $offset
      * @param false $directChildren
+     * @return mixed
      */
     public function findChildrenBy($node, ?array $orderBy = null, ?int $limit = null, ?int $offset = null, bool $directChildren = false)
     {
         $qb = $this->getChildrenQueryBuilder($node, $directChildren, key($orderBy), array_shift($orderBy));
+
         return $qb->setMaxResults($limit)->setFirstResult($offset)->getQuery()->execute();
 
+    }
+
+    /**
+     * Count children for a specific node
+     *
+     * @param $node
+     * @param bool|false $directChildren
+     * @throws \Doctrine\ORM\NoResultException
+     * @throws \Doctrine\ORM\NonUniqueResultException
+     * @return mixed
+     */
+    public function countChildren($node, bool $directChildren = false)
+    {
+        if($directChildren) {
+            $count = $this->countDirectChildren($node);
+        } else {
+            $count = $this->countAllChildren($node);
+        }
+
+        return $count;
     }
 
     /**
@@ -62,6 +84,50 @@ class UserRepository extends  NestedTreeRepository implements PasswordUpgraderIn
             ->getSingleScalarResult();
 
         return (bool)$count;
+    }
+
+    /**
+     * @param $parentNode
+     * @return mixed
+     * @throws \Doctrine\ORM\NoResultException
+     * @throws \Doctrine\ORM\NonUniqueResultException
+     */
+    public function countAllChildren($parentNode)
+    {
+        $qBuilder = $this->createQueryBuilder('tree_entity');
+        $count = $qBuilder
+            ->select('COUNT(tree_entity)')
+            ->where('tree_entity.lft > :lft')
+            ->andWhere('tree_entity.rgt <= :rgt')
+            ->andWhere('tree_entity.tree_root <= :tree_root')
+            ->setParameter('lft', $parentNode->getLft())
+            ->setParameter('rgt', $parentNode->getRgt())
+            ->setParameter('tree_root', $parentNode->getTreeRoot())
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return $count;
+    }
+
+    /**
+     * @param $parentNode
+     * @return mixed
+     * @throws \Doctrine\ORM\NoResultException
+     * @throws \Doctrine\ORM\NonUniqueResultException
+     */
+    public function countDirectChildren($parentNode)
+    {
+        $meta = $this->getClassMetadata();
+        $config = $this->listener->getConfiguration($this->_em, $meta->name);
+        $qBuilder = $this->createQueryBuilder('tree_entity');
+        $count = $qBuilder
+            ->select('COUNT(tree_entity)')
+            ->where($qBuilder->expr()->eq('tree_entity.'.$config['parent'], ':pid'))
+            ->setParameter('pid', $parentNode->getId())
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return $count;
     }
     /**
      * Used to upgrade (rehash) the user's password automatically over time.
