@@ -63,7 +63,7 @@ class UserController extends AbstractController
     }
 
     /**
-     * @Route("/user", name="user_store", methods={"POST"})
+     * @Route("/user/invite-user", name="user_store", methods={"POST"})
      *
      * @param UserStoreDTORequest $request
      * @param EntityManagerInterface $em

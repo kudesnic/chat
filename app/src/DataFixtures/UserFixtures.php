@@ -3,6 +3,7 @@
 namespace App\DataFixtures;
 
 use App\Entity\User as EntityUser;
+use App\Entity\User;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\Persistence\ObjectManager;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
@@ -38,7 +39,7 @@ class UserFixtures extends Fixture
             $user->setEmail('andrey' . $i . $treeKey . '@gmail.com');
             $user->setPassword($this->encoder->encodePassword($user, '12345678a'));
             $user->setName('Andrey');
-            $user->setIsActive(true);
+            $user->setStatus(User::STATUS_ACTIVE);
             if(is_null($prev) == false){
                 $user->setParent($prev);
             }

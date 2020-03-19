@@ -25,16 +25,6 @@ class UserStoreDTORequest extends DTORequestAbstract
     public $email;
 
     /**
-     * @Assert\Image(
-     *     minWidth = 200,
-     *     maxWidth = 6000,
-     *     minHeight = 200,
-     *     maxHeight = 6000
-     * )
-     */
-    public $img;
-
-    /**
      * @Assert\NotNull
      * @Assert\Length(
      *      min = 2,
@@ -47,26 +37,5 @@ class UserStoreDTORequest extends DTORequestAbstract
      * @Assert\Regex("/^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/")
      */
     public $telephone;
-
-    /**
-     */
-    public $roles = [];
-
-    /**
-     * @var string The hashed password
-     * @Assert\NotNull
-     * @Assert\Length(
-     *      min = 6,
-     *      max = 50
-     * )
-     */
-    public $password;
-
-    /**
-     * @var string The hashed password
-     * @Assert\NotNull
-     * @Assert\EqualTo(propertyPath = "password")
-     */
-    public $password_confirmation;
 
 }

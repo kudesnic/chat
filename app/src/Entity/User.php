@@ -17,6 +17,9 @@ use Gedmo\Mapping\Annotation as Gedmo;
  */
 class User implements UserInterface
 {
+    const STATUS_ACTIVE = 'active';
+    const STATUS_INVITED = 'invited';
+    const STATUSES = [self::STATUS_ACTIVE, self::STATUS_INVITED];
     const POSSIBLE_ROLES = ['ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_MANAGER' ];
     /**
      * @Groups("APIGroup")
@@ -53,20 +56,17 @@ class User implements UserInterface
 
     /**
      * @Groups("APIGroup")
-     * @ORM\Column(type="json", nullable=true)
+     * @ORM\Column(type="json", nullable=false)
      */
     private $roles = [];
 
     /**
+     * Password can be NULL only for users with status = invited
+     *
      * @var string The hashed password
-     * @ORM\Column(type="string")
+     * @ORM\Column(type="string", nullable=true)
      */
     private $password;
-
-    /**
-     * @ORM\Column(type="boolean")
-     */
-    private $isActive;
 
     /**
      * @Gedmo\TreeLeft
@@ -110,6 +110,12 @@ class User implements UserInterface
      * @ORM\OrderBy({"lft" = "ASC"})
      */
     private $children;
+
+    /**
+     * @Groups("APIGroup")
+     * @ORM\Column(type="string", columnDefinition="VARCHAR(10) CHECK (status IN ('active', 'invited')) NOT NULL")
+     */
+    private $status;
 
     /**
      * @var \DateTime $created
@@ -241,18 +247,6 @@ class User implements UserInterface
         return $this;
     }
 
-    public function getIsActive():bool
-    {
-        return $this->isActive;
-    }
-
-    public function setIsActive(bool $isActive): self
-    {
-        $this->isActive = $isActive;
-
-        return $this;
-    }
-
     public function getLft(): int
     {
         return $this->lft;
@@ -286,6 +280,18 @@ class User implements UserInterface
     public function getParent()
     {
         return $this->parent;
+    }
+
+    public function getStatus(): string
+    {
+        return (string) $this->status;
+    }
+
+    public function setStatus(string $status): self
+    {
+        $this->status = $status;
+
+        return $this;
     }
 
     public function getCreated()

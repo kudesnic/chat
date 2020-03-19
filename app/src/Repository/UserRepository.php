@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\User;
+use Gedmo\Tool\Wrapper\EntityWrapper;
 use Gedmo\Tree\Entity\Repository\NestedTreeRepository;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
@@ -67,14 +68,14 @@ class UserRepository extends  NestedTreeRepository implements PasswordUpgraderIn
      */
     public function isNodeAChild($parentNode, $childNode):bool
     {
-        $qBuilder = $this->createQueryBuilder('tree_entity');
+        $qBuilder = $this->createQueryBuilder('node');
         $count = $qBuilder
-            ->select('COUNT(tree_entity)')
-            ->where('tree_entity.lft > :lft')
-            ->andWhere('tree_entity.rgt <= :rgt')
-            ->andWhere('tree_entity.tree_root <= :tree_root')
-            ->andWhere('tree_entity.lvl > :level')
-            ->andWhere('tree_entity.id < :child_id')
+            ->select('COUNT(node)')
+            ->where('node.lft > :lft')
+            ->andWhere('node.rgt <= :rgt')
+            ->andWhere('node.tree_root <= :tree_root')
+            ->andWhere('node.lvl > :level')
+            ->andWhere('node.id < :child_id')
             ->setParameter('lft', $parentNode->getLft())
             ->setParameter('rgt', $parentNode->getRgt())
             ->setParameter('tree_root', $parentNode->getTreeRoot())
@@ -94,15 +95,19 @@ class UserRepository extends  NestedTreeRepository implements PasswordUpgraderIn
      */
     public function countAllChildren($parentNode)
     {
-        $qBuilder = $this->createQueryBuilder('tree_entity');
+        $meta = $this->getClassMetadata();
+        $config = $this->listener->getConfiguration($this->_em, $meta->name);
+        $wrapped = new EntityWrapper($parentNode, $this->_em);
+
+        $qBuilder = $this->createQueryBuilder('node');
         $count = $qBuilder
-            ->select('COUNT(tree_entity)')
-            ->where('tree_entity.lft > :lft')
-            ->andWhere('tree_entity.rgt <= :rgt')
-            ->andWhere('tree_entity.tree_root <= :tree_root')
-            ->setParameter('lft', $parentNode->getLft())
-            ->setParameter('rgt', $parentNode->getRgt())
-            ->setParameter('tree_root', $parentNode->getTreeRoot())
+            ->select('COUNT(node)')
+            ->where($qBuilder->expr()->gt('node.' . $config['left'], ':lft'))
+            ->andWhere($qBuilder->expr()->lte('node.' . $config['right'], ':rgt'))
+            ->andWhere($qBuilder->expr()->lte('node.' . $config['root'], ':tree_root'))
+            ->setParameter('lft', $wrapped->getPropertyValue($config['left']))
+            ->setParameter('rgt', $wrapped->getPropertyValue($config['right']))
+            ->setParameter('tree_root', $wrapped->getPropertyValue($config['root']))
             ->getQuery()
             ->getSingleScalarResult();
 
@@ -119,11 +124,13 @@ class UserRepository extends  NestedTreeRepository implements PasswordUpgraderIn
     {
         $meta = $this->getClassMetadata();
         $config = $this->listener->getConfiguration($this->_em, $meta->name);
-        $qBuilder = $this->createQueryBuilder('tree_entity');
+        $wrapped = new EntityWrapper($parentNode, $this->_em);
+
+        $qBuilder = $this->createQueryBuilder('node');
         $count = $qBuilder
-            ->select('COUNT(tree_entity)')
-            ->where($qBuilder->expr()->eq('tree_entity.'.$config['parent'], ':pid'))
-            ->setParameter('pid', $parentNode->getId())
+            ->select('COUNT(node)')
+            ->where($qBuilder->expr()->eq('node.'.$config['parent'], ':pid'))
+            ->setParameter('pid', $wrapped->getIdentifier())
             ->getQuery()
             ->getSingleScalarResult();
 
