@@ -20,7 +20,11 @@ class User implements UserInterface
     const STATUS_ACTIVE = 'active';
     const STATUS_INVITED = 'invited';
     const STATUSES = [self::STATUS_ACTIVE, self::STATUS_INVITED];
-    const POSSIBLE_ROLES = ['ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_MANAGER' ];
+    const ROLE_SUPER_ADMIN = 'ROLE_SUPER_ADMIN';
+    const ROLE_ADMIN = 'ROLE_ADMIN';
+    const ROLE_MANAGER = 'ROLE_MANAGER';
+    const POSSIBLE_ROLES = [self::ROLE_SUPER_ADMIN, self::ROLE_ADMIN, self::ROLE_MANAGER];
+
     /**
      * @Groups("APIGroup")
      * @ORM\Id()
@@ -64,7 +68,7 @@ class User implements UserInterface
      * Password can be NULL only for users with status = invited
      *
      * @var string The hashed password
-     * @ORM\Column(type="string", nullable=true)
+     * @ORM\Column(type="string", nullable=false)
      */
     private $password;
 

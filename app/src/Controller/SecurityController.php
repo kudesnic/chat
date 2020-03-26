@@ -58,18 +58,29 @@ class SecurityController extends AbstractController
     }
 
     /**
-     * @Route("/login", name="login", methods={"POST"})
+     * @Route("/login-for-activation", name="login_for_activation", methods={"POST"})
      */
-    public function login(Request $request, EntityManagerInterface $em)
-    {
+    public function loginForActivation(
+        Request $request,
+        EntityManagerInterface $em,
+        AuthenticationSuccessHandler $authHandler
+    ) {
         $data = json_decode($request->getContent(), true);
         $user = $em->getRepository(User::class)
-            ->findOneBy(['email' => $data['email']]);
-        return $this->json([
-            'email' => $user->getEmail(),
-            'roles' => $user->getRoles(),
-        ]);
+            ->findOneBy(
+                [
+                    'email' => $data['email'],
+                    'status' => User::STATUS_INVITED,
+                ]
+            );
+        if(!$user){
+            return new ApiResponse([], 'User not found', [], 401);
+        }
+
+        return $authHandler->handleAuthenticationSuccess($user);
+
     }
+
     /**
      * @Route("/logout", name="app_logout")
      *

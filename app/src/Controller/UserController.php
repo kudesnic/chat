@@ -11,6 +11,7 @@ use App\Service\PaginationManger;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Routing\Annotation\Route;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
@@ -68,14 +69,25 @@ class UserController extends AbstractController
      * @param UserStoreDTORequest $request
      * @param EntityManagerInterface $em
      * @param JWTUserHolder $userHolder
+     * @param UserPasswordEncoderInterface $encoder
      * @return ApiResponse
+     * @throws \Exception
      */
-    public function store(UserStoreDTORequest $request, EntityManagerInterface $em, JWTUserHolder $userHolder)
-    {
+    public function store(
+        UserStoreDTORequest $request,
+        EntityManagerInterface $em,
+        JWTUserHolder $userHolder,
+        UserPasswordEncoderInterface $encoder
+    ) {
         $user = $userHolder->getUser($request->getRequest());
         $userEntity = new User();
         $userEntity = $request->populateEntity($userEntity);
         $userEntity->setParent($user);
+        $userEntity->setRoles([User::ROLE_MANAGER]);
+        $userEntity->setStatus(User::STATUS_INVITED);
+        //sets random password for invited user, so no one knows it and no one can use it
+        $encodedPassword = $encoder->encodePassword($userEntity, bin2hex(random_bytes(10)));
+        $userEntity->setPassword($encodedPassword);
         $em->persist($userEntity);
         $em->flush($userEntity);
 

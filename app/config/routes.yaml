@@ -5,6 +5,9 @@
 gesdinet_jwt_refresh_token:
   path:       /api/token/refresh
   controller: gesdinet.jwtrefreshtoken::refresh
-#api:
-#  prefix: /api
-#  resource: '../src/Controller/Api'
+api_login:
+  path: /api/login
+  methods: POST
+api_user_activation:
+  path: /api/activate-user
+  methods: POST
