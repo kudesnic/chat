@@ -51,7 +51,7 @@ class UserController extends AbstractController
      * @param JWTUserHolder $userHolder
      * @return ApiResponse
      */
-    public function show(User $user,Request $request, EntityManagerInterface $em, JWTUserHolder $userHolder)
+    public function show(User $user, Request $request, EntityManagerInterface $em, JWTUserHolder $userHolder)
     {
         $loggedUser = $userHolder->getUser($request);
         $repository = $em->getRepository(User::class);

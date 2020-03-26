@@ -9,17 +9,8 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 use App\Validator as CustomValidators;
 
-class RegisterDTORequest extends DTORequestAbstract
+class ActivateUserDTORequest extends DTORequestAbstract
 {
-    /**
-     * @Assert\NotNull
-     * @Assert\Email
-     * @CustomValidators\UniqueValueInEntity(
-     *     entityClass = User::class,
-     *     field = "email"
-     * )
-     */
-    public $email;
 
     /**
      * @Assert\Image(
@@ -44,10 +35,6 @@ class RegisterDTORequest extends DTORequestAbstract
      * @Assert\Regex("/^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/")
      */
     public $telephone;
-
-    /**
-     */
-    public $roles = [];
 
     /**
      * @var string The hashed password

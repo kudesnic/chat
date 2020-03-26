@@ -2,11 +2,25 @@
 
 namespace App\EventListener;
 
+use App\Entity\User;
 use Lexik\Bundle\JWTAuthenticationBundle\Event\JWTDecodedEvent;
-use Symfony\Component\HttpKernel\Event\ExceptionEvent;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 class JWTDecodedListener
 {
+    /**
+     * @var RequestStack
+     */
+    private $requestStack;
+
+    /**
+     * @param RequestStack $requestStack
+     */
+    public function __construct(RequestStack $requestStack)
+    {
+        $this->requestStack = $requestStack;
+    }
+
     /**
      * @param JWTDecodedEvent $event
      *
@@ -14,30 +28,14 @@ class JWTDecodedListener
      */
     public function onJWTDecoded(JWTDecodedEvent $event)
     {
-        dd(111);
-
         $request = $this->requestStack->getCurrentRequest();
-
         $payload = $event->getPayload();
-        if (!isset($payload['ip']) || $payload['ip'] !== $request->getClientIp()) {
+
+        if (
+            $request->attributes->get('_firewall_context') == 'security.firewall.map.context.api'
+            && $payload['status'] != User::STATUS_ACTIVE
+        ) {
             $event->markAsInvalid();
         }
     }
-
-
-    /**
-     * @param ExceptionEvent $event
-     * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
-     */
-    public function onKernelException(ExceptionEvent $event)
-    {
-        $exception = $event->getThrowable();
-
-        $request   = $event->getRequest();
-        $payload = $event->getPayload();
-        if (!isset($payload['ip']) || $payload['ip'] !== $request->getClientIp()) {
-            $event->markAsInvalid();
-        }
-    }
-
 }

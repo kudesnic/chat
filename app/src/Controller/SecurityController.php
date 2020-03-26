@@ -35,22 +35,21 @@ class SecurityController extends AbstractController
      * @param RegisterDTORequest $request
      * @param EntityManagerInterface $em
      * @param UserPasswordEncoderInterface $encoder
-     * @param GuardAuthenticatorHandler $guard
-     * @param AuthenticatorInterface $authenticator
-     *
-     * @return null|\Symfony\Component\HttpFoundation\Response
+     * @param AuthenticationSuccessHandler $authHandler
+     * @return \Lexik\Bundle\JWTAuthenticationBundle\Response\JWTAuthenticationSuccessResponse
      */
     public function register(
         RegisterDTORequest $request,
         EntityManagerInterface $em,
         UserPasswordEncoderInterface $encoder,
         AuthenticationSuccessHandler $authHandler
-    ) {
+    )
+    {
         $user = new User();
         $entity = $request->populateEntity($user);
         $encodedPassword = $encoder->encodePassword($entity, $request->password);
         $entity->setPassword($encodedPassword);
-        $entity->setIsActive(true);
+        $entity->setStatus(User::STATUS_ACTIVE);
         $em->persist($entity);
         $em->flush($entity);
         $response = $authHandler->handleAuthenticationSuccess($entity);
@@ -58,8 +57,50 @@ class SecurityController extends AbstractController
         return $response;
     }
 
+
+    /**
+     * Register main user
+     *
+     * @Route("/activate-user/{id}", name="activate-user", requirements={"id":"\d+"}, methods={"PUT"})
+     * @ParamConverter("id", class="App\Entity\User", options={"id": "id"})
+     *
+     * @param ActivateUserDTORequest $request
+     * @param EntityManagerInterface $em
+     * @param UserPasswordEncoderInterface $encoder
+     * @param AuthenticationSuccessHandler $authHandler
+     * @return \Lexik\Bundle\JWTAuthenticationBundle\Response\JWTAuthenticationSuccessResponse
+     */
+//    public function activateUser(
+//        User $user,
+//        ActivateUserDTORequest $request,
+//        EntityManagerInterface $em,
+//        JWTUserHolder $userHolder,
+//        UserPasswordEncoderInterface $encoder,
+//        AuthenticationSuccessHandler $authHandler
+//    ) {
+//        $userFromToken = $userHolder->getUserDataFromToken($request->getRequest());
+//          if($userFromToken['id'] != $user->getId()){
+//              throw new Exception('You cant activate this user');
+//          }
+
+//        $entity = $request->populateEntity($user);
+//        $encodedPassword = $encoder->encodePassword($entity, $request->password);
+//        $entity->setPassword($encodedPassword);
+//        $entity->setStatus(User::STATUS_ACTIVE);
+//        $em->persist($entity);
+//        $em->flush($entity);
+//        $response = $authHandler->handleAuthenticationSuccess($entity);
+//
+//        return $response;
+//    }
+
     /**
      * @Route("/login-for-activation", name="login_for_activation", methods={"POST"})
+     *
+     * @param Request $request
+     * @param EntityManagerInterface $em
+     * @param InvitedUserAuthenticationSuccessHandler $authHandler
+     * @return ApiResponse|\Lexik\Bundle\JWTAuthenticationBundle\Response\JWTAuthenticationSuccessResponse
      */
     public function loginForActivation(
         Request $request,
@@ -89,6 +130,6 @@ class SecurityController extends AbstractController
      */
     public function logout()
     {
-        throw new \Exception('This method can be blank - it will be intercepted by the logout key on your firewall');
+
     }
 }

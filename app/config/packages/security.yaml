@@ -38,19 +38,18 @@ security:
         activation:
             pattern:  ^/api/activate-user
             stateless: true
-            anonymous: false
+            anonymous: lazy
             guard:
                 authenticators:
                     - App\Security\InvitedUserJWTTokenAuthenticator
             json_login:
                 success_handler: App\Security\InvitedUserAuthenticationSuccessHandler
                 check_path: /api/activate-user
-        main:
-            anonymous: lazy
+
         api:
             pattern:   ^/api
             stateless: true
-            anonymous: false
+            anonymous: lazy
             guard:
                 authenticators:
                 - lexik_jwt_authentication.jwt_token_authenticator

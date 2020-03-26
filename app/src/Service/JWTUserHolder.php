@@ -2,7 +2,6 @@
 
 namespace App\Service;
 
-
 use Lexik\Bundle\JWTAuthenticationBundle\Encoder\JWTEncoderInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\TokenExtractor\TokenExtractorInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -11,6 +10,7 @@ use Symfony\Component\Security\Core\User\UserProviderInterface;
 class JWTUserHolder
 {
     private $user;
+    private $userFromToken;
     private $encoder;
     private $extractor;
     private $userProvider;
@@ -23,7 +23,9 @@ class JWTUserHolder
     }
 
     /**
-     * @return mixed
+     * @param Request $request
+     * @return \Symfony\Component\Security\Core\User\UserInterface
+     * @throws \Lexik\Bundle\JWTAuthenticationBundle\Exception\JWTDecodeFailureException
      */
     public function getUser(Request $request)
     {
@@ -35,5 +37,21 @@ class JWTUserHolder
         }
 
         return $this->user;
+    }
+
+    /**
+     * @param Request $request
+     * @return array
+     * @throws \Lexik\Bundle\JWTAuthenticationBundle\Exception\JWTDecodeFailureException
+     */
+    public function getUserDataFromToken(Request $request)
+    {
+        if(is_null($this->userFromToken)){
+            $token = $this->extractor->extract($request);
+            //decode throws an exception in case of wrong token
+            $this->userFromToken = $this->encoder->decode($token);
+        }
+
+        return $this->userFromToken;
     }
 }

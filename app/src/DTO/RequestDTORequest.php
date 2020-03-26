@@ -1,8 +1,8 @@
 <?php
-namespace App\DTO;
 
-use Symfony\Component\HttpFoundation\Request;
+namespace App\DTO;
 
 interface RequestDTOInterface
 {
+
 }
