@@ -6,6 +6,7 @@ use App\DTO\Another\RegisterDTORequest;
 use App\Entity\User;
 use App\Exception\ValidationException;
 use App\Http\ApiResponse;
+use App\Security\InvitedUserAuthenticationSuccessHandler;
 use Doctrine\ORM\EntityManagerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Events;
 use Lexik\Bundle\JWTAuthenticationBundle\Security\Http\Authentication\AuthenticationSuccessHandler;
@@ -63,7 +64,7 @@ class SecurityController extends AbstractController
     public function loginForActivation(
         Request $request,
         EntityManagerInterface $em,
-        AuthenticationSuccessHandler $authHandler
+        InvitedUserAuthenticationSuccessHandler $authHandler
     ) {
         $data = json_decode($request->getContent(), true);
         $user = $em->getRepository(User::class)

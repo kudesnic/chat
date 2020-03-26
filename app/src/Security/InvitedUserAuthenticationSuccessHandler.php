@@ -45,12 +45,6 @@ class InvitedUserAuthenticationSuccessHandler implements AuthenticationSuccessHa
 
         $response = new JWTAuthenticationSuccessResponse($jwt);
         $event    = new AuthenticationSuccessEvent(['token' => $jwt], $user, $response);
-dd(1);
-        if ($this->dispatcher instanceof ContractsEventDispatcherInterface) {
-            $this->dispatcher->dispatch($event, Events::AUTHENTICATION_SUCCESS);
-        } else {
-            $this->dispatcher->dispatch(Events::AUTHENTICATION_SUCCESS, $event);
-        }
 
         $response->setData($event->getData());
 

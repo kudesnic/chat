@@ -27,6 +27,14 @@ services:
     App\EventListener\ExceptionListener:
         tags:
         - { name: kernel.event_listener, event: kernel.exception }
+    App\EventListener\JWTDecodedListener:
+          tags:
+              - { name: kernel.event_listener, event: lexik_jwt_authentication.on_jwt_decoded }
+#    acme_api.event.jwt_decoded_listener:
+#        class: App\EventListener\JWTDecodedListener
+#        arguments: [ '@request_stack' ]
+#        tags:
+#            - { name: kernel.event_listener, event: lexik_jwt_authentication.on_jwt_decoded, method: onJWTDecoded }
 
     App\Serializer\FormExceptionNormalizer:
         tags: ['serializer.normalizer']
