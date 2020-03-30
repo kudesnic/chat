@@ -3,7 +3,6 @@
 namespace App\EventListener;
 
 use Lexik\Bundle\JWTAuthenticationBundle\Event\AuthenticationSuccessEvent;
-use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 class AuthenticationSuccessListener
@@ -25,6 +24,7 @@ class AuthenticationSuccessListener
             'email' => $user->getEmail(),
             'name' => $user->getName(),
             'roles' => $user->getRoles(),
+            'status' => $user->getStatus(),
         ];
 
         $event->setData($data);

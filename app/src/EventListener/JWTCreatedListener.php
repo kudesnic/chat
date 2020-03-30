@@ -28,9 +28,8 @@ class JWTCreatedListener
      */
     public function onJWTCreated(JWTCreatedEvent $event)
     {
-        $request = $this->requestStack->getCurrentRequest();
         $user = $event->getUser();
-        $payload       = $event->getData();
+        $payload = $event->getData();
         $payload['status'] = $user->getStatus();
 
         $event->setData($payload);

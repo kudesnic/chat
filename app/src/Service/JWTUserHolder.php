@@ -7,6 +7,13 @@ use Lexik\Bundle\JWTAuthenticationBundle\TokenExtractor\TokenExtractorInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
 
+/**
+ * Class JWTUserHolder
+ * This class serves as a user holder and user extractor.
+ * Can be used only for users with active status, cause we inject only main_user_provider into it
+ *
+ * @package App\Service
+ */
 class JWTUserHolder
 {
     private $user;

@@ -63,5 +63,9 @@ services:
         arguments: [!tagged serializer.normalizer]
         public: true
 
+    # Injects only user provider for users with status = active. So JWTUserHoldercan be used only for active users
+    App\Service\JWTUserHolder:
+        $userProvider: '@security.user.provider.concrete.main_user_provider'
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

@@ -12,16 +12,20 @@ security:
     # https://symfony.com/doc/current/security.html#where-do-users-come-from-user-providers
     providers:
         # used to reload user from session & other features (e.g. switch_user)
-        app_user_provider:
+        main_user_provider:
             entity:
                 class: App\Entity\User
                 property: email
         # used to reload user from session & other features (e.g. switch_user)
+        invited_user_provider:
+            id: App\Security\InvitedUserProvider
+
 
     firewalls:
 
         login:
             pattern:  ^/api/login
+            provider: main_user_provider
             stateless: true
             anonymous: true
             json_login:
@@ -33,21 +37,20 @@ security:
 
         refresh:
             pattern:  ^/api/token/refresh
+            provider: main_user_provider
             stateless: true
             anonymous: true
         activation:
             pattern:  ^/api/activate-user
+            provider: invited_user_provider
             stateless: true
             anonymous: lazy
             guard:
                 authenticators:
                     - App\Security\InvitedUserJWTTokenAuthenticator
-            json_login:
-                success_handler: App\Security\InvitedUserAuthenticationSuccessHandler
-                check_path: /api/activate-user
-
         api:
             pattern:   ^/api
+            provider: main_user_provider
             stateless: true
             anonymous: lazy
             guard:
