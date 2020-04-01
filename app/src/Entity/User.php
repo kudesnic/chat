@@ -24,6 +24,7 @@ class User implements UserInterface
     const ROLE_ADMIN = 'ROLE_ADMIN';
     const ROLE_MANAGER = 'ROLE_MANAGER';
     const POSSIBLE_ROLES = [self::ROLE_SUPER_ADMIN, self::ROLE_ADMIN, self::ROLE_MANAGER];
+    const PUBLIC_ROLES = [ self::ROLE_ADMIN, self::ROLE_MANAGER];
 
     /**
      * @Groups("APIGroup")

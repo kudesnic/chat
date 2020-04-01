@@ -12,7 +12,7 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 use App\Validator as CustomValidators;
 
-class UserStoreDTORequest extends DTORequestAbstract
+class UserInviteDTORequest extends DTORequestAbstract
 {
     /**
      * @Assert\NotNull
@@ -37,5 +37,11 @@ class UserStoreDTORequest extends DTORequestAbstract
      * @Assert\Regex("/^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/")
      */
     public $telephone;
+
+    /**
+     * @Assert\NotNull
+     * @CustomValidators\UserRoles
+     */
+    public $roles = [];
 
 }

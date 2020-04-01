@@ -2,12 +2,12 @@
 
 namespace App\Controller;
 
-use App\DTO\Store\UserStoreDTORequest;
+use App\DTO\Store\UserInviteDTORequest;
 use App\DTO\Update\UserUpdateDTORequest;
 use App\Entity\User;
 use App\Http\ApiResponse;
-use App\Service\JWTUserHolder;
-use App\Service\PaginationManger;
+use App\Service\JWTUserService;
+use App\Service\PaginationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -27,11 +27,11 @@ class UserController extends AbstractController
      * @Route("/user", name="user_list",  defaults={"page": 1},  methods={"GET"})
      *
      * @param Request $request
-     * @param PaginationManger $paginationManger
-     * @param JWTUserHolder $userHolder
+     * @param PaginationService $paginationManger
+     * @param JWTUserService $userHolder
      * @return ApiResponse
      */
-    public function index(Request $request, PaginationManger $paginationManger, JWTUserHolder $userHolder)
+    public function index(Request $request, PaginationService $paginationManger, JWTUserService $userHolder)
     {
         $page = $request->query->get('page');
         $user = $userHolder->getUser($request);
@@ -48,10 +48,10 @@ class UserController extends AbstractController
      * @param User $user
      * @param Request $request
      * @param EntityManagerInterface $em
-     * @param JWTUserHolder $userHolder
+     * @param JWTUserService $userHolder
      * @return ApiResponse
      */
-    public function show(User $user, Request $request, EntityManagerInterface $em, JWTUserHolder $userHolder)
+    public function show(User $user, Request $request, EntityManagerInterface $em, JWTUserService $userHolder)
     {
         $loggedUser = $userHolder->getUser($request);
         $repository = $em->getRepository(User::class);
@@ -66,24 +66,23 @@ class UserController extends AbstractController
     /**
      * @Route("/user/invite-user", name="user_store", methods={"POST"})
      *
-     * @param UserStoreDTORequest $request
+     * @param UserInviteDTORequest $request
      * @param EntityManagerInterface $em
-     * @param JWTUserHolder $userHolder
+     * @param JWTUserService $userHolder
      * @param UserPasswordEncoderInterface $encoder
      * @return ApiResponse
      * @throws \Exception
      */
-    public function store(
-        UserStoreDTORequest $request,
+    public function inviteUser(
+        UserInviteDTORequest $request,
         EntityManagerInterface $em,
-        JWTUserHolder $userHolder,
+        JWTUserService $userHolder,
         UserPasswordEncoderInterface $encoder
     ) {
         $user = $userHolder->getUser($request->getRequest());
         $userEntity = new User();
         $userEntity = $request->populateEntity($userEntity);
         $userEntity->setParent($user);
-        $userEntity->setRoles([User::ROLE_MANAGER]);
         $userEntity->setStatus(User::STATUS_INVITED);
         //sets random password for invited user, so no one knows it and no one can use it
         $encodedPassword = $encoder->encodePassword($userEntity, bin2hex(random_bytes(10)));
@@ -99,10 +98,10 @@ class UserController extends AbstractController
      *
      * @param UserUpdateDTORequest $request
      * @param EntityManagerInterface $em
-     * @param JWTUserHolder $userHolder
+     * @param JWTUserService $userHolder
      * @return ApiResponse
      */
-    public function update(UserUpdateDTORequest $request, EntityManagerInterface $em, JWTUserHolder $userHolder)
+    public function update(UserUpdateDTORequest $request, EntityManagerInterface $em, JWTUserService $userHolder)
     {
         $user = $userHolder->getUser($request->getRequest());
         $userEntity = new User();
@@ -120,11 +119,11 @@ class UserController extends AbstractController
      *
      * @param User $userToDelete
      * @param Request $request
-     * @param JWTUserHolder $userHolder
+     * @param JWTUserService $userHolder
      * @param EntityManagerInterface $em
      * @return ApiResponse
      */
-    public function destroy(User $userToDelete, Request $request, JWTUserHolder $userHolder, EntityManagerInterface $em)
+    public function destroy(User $userToDelete, Request $request, JWTUserService $userHolder, EntityManagerInterface $em)
     {
         $loggedUser = $userHolder->getUser($request);
         $repository = $em->getRepository(User::class);

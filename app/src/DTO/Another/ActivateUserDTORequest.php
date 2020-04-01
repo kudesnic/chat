@@ -23,13 +23,14 @@ class ActivateUserDTORequest extends DTORequestAbstract
     public $img;
 
     /**
-     * @Assert\NotNull
-     * @Assert\Length(
-     *      min = 2,
-     *      max = 50
+     *  @CustomValidators\Base64Image(
+     *     minWidth = 40,
+     *     maxWidth = 4500,
+     *     minHeight = 40,
+     *     maxHeight = 6000
      * )
      */
-    public $name;
+    public $img_encoded;
 
     /**
      * @Assert\Regex("/^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/")

@@ -8,13 +8,13 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
 
 /**
- * Class JWTUserHolder
+ * Class JWTUserService
  * This class serves as a user holder and user extractor.
  * Can be used only for users with active status, cause we inject only main_user_provider into it
  *
  * @package App\Service
  */
-class JWTUserHolder
+class JWTUserService
 {
     private $user;
     private $userFromToken;

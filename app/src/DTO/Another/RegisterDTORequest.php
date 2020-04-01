@@ -22,17 +22,16 @@ class RegisterDTORequest extends DTORequestAbstract
     public $email;
 
     /**
-     * @Assert\Image(
-     *     minWidth = 200,
-     *     maxWidth = 6000,
-     *     minHeight = 200,
+     *  @CustomValidators\Base64Image(
+     *     minWidth = 40,
+     *     maxWidth = 4500,
+     *     minHeight = 40,
      *     maxHeight = 6000
      * )
      */
-    public $img;
+    public $img_encoded;
 
     /**
-     * @Assert\NotNull
      * @Assert\Length(
      *      min = 2,
      *      max = 50
@@ -45,9 +44,6 @@ class RegisterDTORequest extends DTORequestAbstract
      */
     public $telephone;
 
-    /**
-     */
-    public $roles = [];
 
     /**
      * @var string The hashed password
