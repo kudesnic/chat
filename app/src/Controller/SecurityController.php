@@ -14,7 +14,6 @@ use Lexik\Bundle\JWTAuthenticationBundle\Encoder\JWTEncoderInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Security\Http\Authentication\AuthenticationSuccessHandler;
 use Lexik\Bundle\JWTAuthenticationBundle\TokenExtractor\TokenExtractorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Symfony\Component\Routing\Annotation\Route;
@@ -37,14 +36,21 @@ class SecurityController extends AbstractController
         RegisterDTORequest $request,
         EntityManagerInterface $em,
         UserPasswordEncoderInterface $encoder,
-        AuthenticationSuccessHandler $authHandler
-    )
-    {
+        AuthenticationSuccessHandler $authHandler,
+        Base64ImageService $imageService
+    ) {
         $user = new User();
         $entity = $request->populateEntity($user);
         $encodedPassword = $encoder->encodePassword($entity, $request->password);
         $entity->setPassword($encodedPassword);
         $entity->setStatus(User::STATUS_ACTIVE);
+
+        if($request->img_encoded){
+            $imgDirectory = User::UPLOAD_DIRECTORY . '/' . $user->getId() . '/' . User::AVATAR_PATH ;
+            $imgPath = $imageService->saveImage($request->img_encoded, $imgDirectory, uniqid());
+            $entity->setImg($imgPath);
+        }
+
         $em->persist($entity);
         $em->flush($entity);
         $response = $authHandler->handleAuthenticationSuccess($entity);
@@ -76,8 +82,7 @@ class SecurityController extends AbstractController
         UserPasswordEncoderInterface $passwordEncoder,
         InvitedUserProvider $userProvider,
         AuthenticationSuccessHandler $authHandler,
-        Base64ImageService $imageService,
-        ParameterBagInterface $parameters
+        Base64ImageService $imageService
     ) {
         $token = $tokenExtractor->extract($activateUserDTORequest->getRequest());
         //decode throws an exception in case of wrong token
