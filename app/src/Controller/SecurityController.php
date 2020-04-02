@@ -8,11 +8,13 @@ use App\Entity\User;
 use App\Http\ApiResponse;
 use App\Security\InvitedUserAuthenticationSuccessHandler;
 use App\Security\InvitedUserProvider;
+use App\Service\Base64ImageService;
 use Doctrine\ORM\EntityManagerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Encoder\JWTEncoderInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Security\Http\Authentication\AuthenticationSuccessHandler;
 use Lexik\Bundle\JWTAuthenticationBundle\TokenExtractor\TokenExtractorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Symfony\Component\Routing\Annotation\Route;
@@ -73,17 +75,25 @@ class SecurityController extends AbstractController
         JWTEncoderInterface $JWTEncoder,
         UserPasswordEncoderInterface $passwordEncoder,
         InvitedUserProvider $userProvider,
-        AuthenticationSuccessHandler $authHandler
+        AuthenticationSuccessHandler $authHandler,
+        Base64ImageService $imageService,
+        ParameterBagInterface $parameters
     ) {
         $token = $tokenExtractor->extract($activateUserDTORequest->getRequest());
         //decode throws an exception in case of wrong token
         $user = $JWTEncoder->decode($token);
         $user = $userProvider->loadUserByUsername($user['email']);
-
         $entity = $activateUserDTORequest->populateEntity($user);
         $encodedPassword = $passwordEncoder->encodePassword($entity, $activateUserDTORequest->password);
         $entity->setPassword($encodedPassword);
         $entity->setStatus(User::STATUS_ACTIVE);
+
+        if($activateUserDTORequest->img_encoded){
+            $imgDirectory = User::UPLOAD_DIRECTORY . '/' . $user->getId() . '/' . User::AVATAR_PATH ;
+            $imgPath = $imageService->saveImage($activateUserDTORequest->img_encoded, $imgDirectory, $user->getId());
+            $entity->setImg($imgPath);
+        }
+
         $em->persist($entity);
         $em->flush($entity);
         $response = $authHandler->handleAuthenticationSuccess($entity);
@@ -129,4 +139,5 @@ class SecurityController extends AbstractController
     {
 
     }
+
 }

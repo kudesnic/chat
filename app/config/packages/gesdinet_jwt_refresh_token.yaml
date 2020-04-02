@@ -2,4 +2,4 @@ gesdinet_jwt_refresh_token:
   firewall: api
   ttl: 2592000
   user_identity_field: email
-  user_provider: security.user.provider.concrete.app_user_provider
+  user_provider: security.user.provider.concrete.main_user_provider
