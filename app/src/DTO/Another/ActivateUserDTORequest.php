@@ -25,9 +25,9 @@ class ActivateUserDTORequest extends DTORequestAbstract
     /**
      *  @CustomValidators\Base64Image(
      *     minWidth = 40,
-     *     maxWidth = 4500,
+     *     maxWidth = 5000,
      *     minHeight = 40,
-     *     maxHeight = 6000
+     *     maxHeight = 5000
      * )
      */
     public $img_encoded;
