@@ -4,7 +4,7 @@ namespace App\Validator;
 
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
-use http\Exception\InvalidArgumentException;
+use Symfony\Component\Form\Exception\InvalidArgumentException;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 

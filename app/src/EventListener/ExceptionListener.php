@@ -39,12 +39,13 @@ class ExceptionListener
         if (in_array('application/json', $request->getAcceptableContentTypes())
             && ($exception instanceof ValidationExceptionInterface || $exception instanceof NotFoundHttpException)
         ){
+
             $response = $this->createApiResponse($exception);
             $event->setResponse($response);
 
             //for some reasons JWTDecodeFailureException always has statusCode = 0 ...it is Hardcoded in JWT extension,
             //we need 401
-        } elseif ($exception instanceof JWTDecodeFailureException && $exception->getCode() == 0)
+        } elseif ($exception->getCode() != 500)
         {
             $response = new ApiResponse([], $exception->getMessage(), [], 401);
             $event->setResponse($response);

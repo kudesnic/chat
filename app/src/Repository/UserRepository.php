@@ -87,6 +87,31 @@ class UserRepository extends  NestedTreeRepository implements PasswordUpgraderIn
         return (bool)$count;
     }
 
+
+    /**
+     * Checks whether parentNode and childNode in the one tree or not
+     *
+     * @param $parentNode
+     * @param $childNode
+     * @return bool
+     * @throws \Doctrine\ORM\NoResultException
+     * @throws \Doctrine\ORM\NonUniqueResultException
+     */
+    public function areBelongedToTheSameTree($parentNode, $childNode):bool
+    {
+        $qBuilder = $this->createQueryBuilder('node');
+        $count = $qBuilder
+            ->select('COUNT(node)')
+            ->andWhere('node.tree_root = :tree_root')
+            ->andWhere('node.id < :child_id')
+            ->setParameter('tree_root', $parentNode->getTreeRoot())
+            ->setParameter('child_id', $childNode->getId())
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return (bool)$count;
+    }
+
     /**
      * @param $parentNode
      * @return mixed

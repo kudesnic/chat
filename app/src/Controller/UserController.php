@@ -13,6 +13,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Routing\Annotation\Route;
@@ -51,15 +52,16 @@ class UserController extends AbstractController
      * @param Request $request
      * @param EntityManagerInterface $em
      * @param JWTUserService $userHolder
+     * @throws AuthenticationException
      * @return ApiResponse
      */
     public function show(User $user, Request $request, EntityManagerInterface $em, JWTUserService $userHolder)
     {
         $loggedUser = $userHolder->getUser($request);
         $repository = $em->getRepository(User::class);
-        $canShow = $repository->isNodeAChild($loggedUser, $user);
-        if($canShow == false && $loggedUser->getId() !== $user->getId()){
-            throw new AuthenticationException('You can\'t see this user');
+        $canShow = $repository->areBelongedToTheSameTree($loggedUser, $user);
+        if($canShow == false){
+            throw new AccessDeniedHttpException('You can\'t see this user');
         }
 
         return new ApiResponse($user);
@@ -96,19 +98,45 @@ class UserController extends AbstractController
     }
 
     /**
-     * @Route("/user/{id}", name="user_update", methods={"PUT"})
+     * @Route("/user/{id}", name="user_update", requirements={"id":"\d+"}, methods={"PUT"})
+     * @ParamConverter("id", class="App\Entity\User", options={"id": "id"})
      *
+     * @param User $userToUpdate
      * @param UserUpdateDTORequest $request
      * @param EntityManagerInterface $em
      * @param JWTUserService $userHolder
+     * @param Base64ImageService $imageService
+     * @throws AccessDeniedHttpException
      * @return ApiResponse
      */
-    public function update(UserUpdateDTORequest $request, EntityManagerInterface $em, JWTUserService $userHolder)
-    {
-        $user = $userHolder->getUser($request->getRequest());
-        $userEntity = new User();
-        $userEntity = $request->populateEntity($userEntity);
-        $userEntity->setParent($user);
+    public function update(
+        User $userToUpdate,
+        UserUpdateDTORequest $request,
+        EntityManagerInterface $em,
+        JWTUserService $userHolder,
+        Base64ImageService $imageService
+    ) {
+        $loggedUser = $userHolder->getUser($request->getRequest());
+        $repository = $em->getRepository(get_class($userToUpdate));
+
+        $isChild = $repository->isNodeAChild($loggedUser, $userToUpdate);
+        if($isChild == false && $loggedUser->getId() != $userToUpdate->getId()){
+            throw new AccessDeniedHttpException('You can not update this user, because it doesn\'t belong to you!');
+        }
+
+        $userEntity = $request->populateEntity($userToUpdate);
+        if($request->parent_id){
+            $parentUser = $repository->find($request->parent_id);
+            $userEntity->setParent($parentUser);
+        }
+
+        if($request->img_encoded){
+            /**TODO Add previous image deleting**/
+            $imgDirectory = User::UPLOAD_DIRECTORY . '/' . $userEntity->getId() . '/' . User::AVATAR_PATH ;
+            $imgPath = $imageService->saveImage($request->img_encoded, $imgDirectory, uniqid());
+            $userEntity->setImg($imgPath);
+        }
+
         $em->persist($userEntity);
         $em->flush($userEntity);
 
@@ -123,17 +151,18 @@ class UserController extends AbstractController
      * @param Request $request
      * @param JWTUserService $userHolder
      * @param EntityManagerInterface $em
+     * @throws AccessDeniedHttpException|AccessDeniedHttpException
      * @return ApiResponse
      */
     public function destroy(User $userToDelete, Request $request, JWTUserService $userHolder, EntityManagerInterface $em)
     {
         $loggedUser = $userHolder->getUser($request);
         $repository = $em->getRepository(User::class);
-        $canDelete = $repository->isNodeAChild($loggedUser, $userToDelete);
-        if($loggedUser->getId() == $userToDelete->getId()){
-            throw new AuthenticationException('You can not delete yourself!');
-        } elseif($canDelete == false){
-            throw new AuthenticationException('You can not delete this user, because it doesn\'t belong to you!');
+        $isChild = $repository->isNodeAChild($loggedUser, $userToDelete);
+        if($loggedUser->getId() == $userToDelete->getId() && $repository->countChildren($userToDelete)){
+            throw new AccessDeniedHttpException('You can not delete yourself, if you have subordinates managers!');
+        } elseif($isChild == false){
+            throw new AccessDeniedHttpException('You can not delete this user, because it doesn\'t belong to you!');
         }
 
         $em->remove($userToDelete);

@@ -24,14 +24,15 @@ class UserUpdateDTORequest extends DTORequestAbstract
     public $email;
 
     /**
-     * @Assert\Image(
-     *     minWidth = 200,
-     *     maxWidth = 6000,
-     *     minHeight = 200,
-     *     maxHeight = 6000
+     *  @CustomValidators\Base64Image(
+     *     minWidth = 40,
+     *     maxWidth = 5000,
+     *     minHeight = 40,
+     *     maxHeight = 5000
      * )
      */
-    public $img;
+    public $img_encoded;
+
 
     /**
      * @Assert\Length(
@@ -47,7 +48,13 @@ class UserUpdateDTORequest extends DTORequestAbstract
     public $telephone;
 
     /**
+     * @CustomValidators\UserRoles
      */
     public $roles = [];
+
+    /**
+     * @CustomValidators\EntityInTheSameTree(entityClass = User::class, id = "id")
+     */
+    public $parent_id = [];
 
 }
