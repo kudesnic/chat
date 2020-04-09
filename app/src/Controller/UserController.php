@@ -5,14 +5,17 @@ namespace App\Controller;
 use App\DTO\Store\UserInviteDTORequest;
 use App\DTO\Update\UserUpdateDTORequest;
 use App\Entity\User;
+use App\Exception\APIResponseException;
 use App\Http\ApiResponse;
 use App\Service\Base64ImageService;
 use App\Service\JWTUserService;
 use App\Service\PaginationService;
 use Doctrine\ORM\EntityManagerInterface;
+use http\Exception\InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
@@ -86,7 +89,6 @@ class UserController extends AbstractController
         $user = $userHolder->getUser($request->getRequest());
         $userEntity = new User();
         $userEntity = $request->populateEntity($userEntity);
-        $userEntity->setParent($user);
         $userEntity->setStatus(User::STATUS_INVITED);
         //sets random password for invited user, so no one knows it and no one can use it
         $encodedPassword = $encoder->encodePassword($userEntity, bin2hex(random_bytes(10)));
@@ -125,20 +127,24 @@ class UserController extends AbstractController
         }
 
         $userEntity = $request->populateEntity($userToUpdate);
+
         if($request->parent_id){
             $parentUser = $repository->find($request->parent_id);
             $userEntity->setParent($parentUser);
+            $repository->persistAsLastChildOf($userEntity,$parentUser);
         }
 
         if($request->img_encoded){
-            /**TODO Add previous image deleting**/
             $imgDirectory = User::UPLOAD_DIRECTORY . '/' . $userEntity->getId() . '/' . User::AVATAR_PATH ;
-            $imgPath = $imageService->saveImage($request->img_encoded, $imgDirectory, uniqid());
+            $imgPath = $imageService->saveImage($request->img_encoded, $imgDirectory, uniqid(), $userEntity->getImg());
             $userEntity->setImg($imgPath);
         }
-
         $em->persist($userEntity);
+
         $em->flush($userEntity);
+        $repository->recover();
+        $em->flush($userEntity);
+
 
         return new ApiResponse($userEntity);
     }

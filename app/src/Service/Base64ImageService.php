@@ -48,17 +48,22 @@ class Base64ImageService
      * Saves base64 image
      *
      * @param string $imgEncoded
-     * @param string $fileName
      * @param string $fileDirectory
-     * @param Base64ImageService $imageService
-     * @param ParameterBagInterface $parameters
+     * @param string $fileName
+     * @param string|null $fileTodelete
      * @return string
      */
     public function saveImage(
         string $imgEncoded,
         string $fileDirectory,
-        string $fileName
+        string $fileName,
+        ?string $fileTodelete = null
     ) {
+
+        if(is_null($fileTodelete) == false && file_exists($fileTodelete)){
+            unlink($fileTodelete);
+        }
+
         $imgFile = $this->convertToFile($imgEncoded);
         $imgName = $fileName . '.' . $imgFile->guessExtension();
         $fileDirectory =  $imgDirectory = $this->parameters->get('upload_path') . '/'. $fileDirectory;

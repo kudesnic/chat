@@ -26,7 +26,7 @@ class APIResponseException extends HttpException
         int $statusCode = 400,
         array $errors = []
     ) {
-        parent::__construct($statusCode, $message, null, [], 0);
+        parent::__construct($statusCode, $message, null, $errors, 0);
     }
 
 

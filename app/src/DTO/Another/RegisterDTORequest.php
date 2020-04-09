@@ -41,7 +41,7 @@ class RegisterDTORequest extends DTORequestAbstract
 
     /**
      * @Assert\NotNull
-     * @Assert\Regex("/^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/")
+     * @Assert\Regex("/^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\.\/0-9]*$/")
      */
     public $telephone;
 
