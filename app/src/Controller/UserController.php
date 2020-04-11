@@ -10,6 +10,7 @@ use App\Http\ApiResponse;
 use App\Service\Base64ImageService;
 use App\Service\JWTUserService;
 use App\Service\PaginationService;
+use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\EntityManagerInterface;
 use http\Exception\InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -30,7 +31,9 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 class UserController extends AbstractController
 {
     /**
-     * @Route("/user", name="user_list",  defaults={"page": 1},  methods={"GET"})
+     * Gets users from the same tree and all levels
+     *
+     * @Route("/user", name="users_list",  defaults={"page": 1},  methods={"GET"})
      *
      * @param Request $request
      * @param PaginationService $paginationManger
@@ -41,11 +44,37 @@ class UserController extends AbstractController
     {
         $page = $request->query->get('page');
         $user = $userHolder->getUser($request);
+        $criteria = Criteria::create()
+            ->where(Criteria::expr()->eq('tree_root', $user->getTreeRoot()))
+            ->orderBy(['name' =>Criteria::ASC]);
         $result = $paginationManger->setRepository(User::class)
-                ->paginateNodeChildren($user, ['name' => 'asc'], $page, null, false);
+                ->paginate($criteria, $page, null);
 
         return new ApiResponse($result);
     }
+
+    /**
+     * Gets only children nodes of nested set
+     *
+     * @Route("/user/children", name="user_list",  defaults={"page": 1},  methods={"GET"})
+     *
+     * @param Request $request
+     * @param PaginationService $paginationManger
+     * @param JWTUserService $userHolder
+     * @return ApiResponse
+     */
+    public function getChildrenUsers(Request $request, PaginationService $paginationManger, JWTUserService $userHolder)
+    {
+        $page = $request->query->get('page');
+        $user = $userHolder->getUser($request);
+        $criteria = Criteria::create()
+            ->orderBy(['name' => Criteria::ASC]);
+        $result = $paginationManger->setRepository(User::class)
+            ->paginateNodeChildren($user, $criteria, $page, null, true);
+
+        return new ApiResponse($result);
+    }
+
 
     /**
      * @Route("/user/{id}", name="user_show", requirements={"id":"\d+"},  methods={"GET"})
@@ -93,6 +122,7 @@ class UserController extends AbstractController
         //sets random password for invited user, so no one knows it and no one can use it
         $encodedPassword = $encoder->encodePassword($userEntity, bin2hex(random_bytes(10)));
         $userEntity->setPassword($encodedPassword);
+        $userEntity->setParent($user);
         $em->persist($userEntity);
         $em->flush($userEntity);
 

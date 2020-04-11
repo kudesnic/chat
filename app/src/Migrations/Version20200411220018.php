@@ -10,7 +10,7 @@ use Doctrine\Migrations\AbstractMigration;
 /**
  * Auto-generated Migration: Please modify to your needs!
  */
-final class Version20200326171539 extends AbstractMigration
+final class Version20200411220018 extends AbstractMigration
 {
     public function getDescription() : string
     {
@@ -22,6 +22,8 @@ final class Version20200326171539 extends AbstractMigration
         // this up() migration is auto-generated, please modify it to your needs
         $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'postgresql', 'Migration can only be executed safely on \'postgresql\'.');
 
+        $this->addSql('ALTER TABLE users ALTER img SET DEFAULT \'resources/default-user-image.png\'');
+        $this->addSql('ALTER TABLE users ALTER img SET NOT NULL');
         $this->addSql('ALTER TABLE users ALTER status TYPE VARCHAR(255)');
     }
 
@@ -30,6 +32,9 @@ final class Version20200326171539 extends AbstractMigration
         // this down() migration is auto-generated, please modify it to your needs
         $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'postgresql', 'Migration can only be executed safely on \'postgresql\'.');
 
+        $this->addSql('CREATE SCHEMA public');
+        $this->addSql('ALTER TABLE users ALTER img DROP DEFAULT');
+        $this->addSql('ALTER TABLE users ALTER img DROP NOT NULL');
         $this->addSql('ALTER TABLE users ALTER status TYPE VARCHAR(10)');
     }
 }

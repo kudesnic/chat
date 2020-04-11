@@ -27,6 +27,7 @@ class User implements UserInterface
     const PUBLIC_ROLES = [ self::ROLE_ADMIN, self::ROLE_MANAGER];
     const AVATAR_PATH = 'avatar';
     const UPLOAD_DIRECTORY = 'users';
+    const DEFAULT_USER_ICON = 'resources/default-user-image.png';
 
     /**
      * @Groups("APIGroup")
@@ -45,7 +46,7 @@ class User implements UserInterface
 
     /**
      * @Groups("APIGroup")
-     * @ORM\Column(type="string", length=255, nullable=true)
+     * @ORM\Column(type="string", length=255, options={"default" : App\Entity\User::DEFAULT_USER_ICON})
      */
     private $img;
 
@@ -139,6 +140,11 @@ class User implements UserInterface
      * @ORM\Column(type="datetime")
      */
     private $updated;
+
+    public function __construct()
+    {
+        $this->img = self::DEFAULT_USER_ICON;
+    }
 
     public function getId(): ?int
     {

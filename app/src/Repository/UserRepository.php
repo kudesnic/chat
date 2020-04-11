@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\User;
+use Doctrine\Common\Collections\Criteria;
 use Gedmo\Tool\Wrapper\EntityWrapper;
 use Gedmo\Tree\Entity\Repository\NestedTreeRepository;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
@@ -29,12 +30,17 @@ class UserRepository extends  NestedTreeRepository implements PasswordUpgraderIn
      * @param false $directChildren
      * @return mixed
      */
-    public function findChildrenBy($node, ?array $orderBy = null, ?int $limit = null, ?int $offset = null, bool $directChildren = false)
+    public function findChildrenBy($node, Criteria $criteria,  bool $directChildren = false)
     {
-        $qb = $this->getChildrenQueryBuilder($node, $directChildren, key($orderBy), array_shift($orderBy));
+        if ($directChildren) {
+            $criteria->where(Criteria::expr()->eq('parent', $node));
+        } else {
+            $criteria->where(Criteria::expr()->lt('rgt', $node->getRgt()));
+            $criteria->andWhere(Criteria::expr()->gt('lft', $node->getLft()));
+        }
+        $criteria->andWhere(Criteria::expr()->eq('tree_root', $node->getTreeRoot()));
 
-        return $qb->setMaxResults($limit)->setFirstResult($offset)->getQuery()->execute();
-
+        return $this->matching($criteria);
     }
 
     /**

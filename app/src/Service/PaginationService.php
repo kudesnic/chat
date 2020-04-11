@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ObjectRepository;
 use Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface;
@@ -63,12 +64,11 @@ class PaginationService
      * Builds pagination array
      *
      * @param array $criteria
-     * @param array|null $orderBy
      * @param int|null $page
      * @param int|null $perPage
      * @return array
      */
-    public function paginate(array $criteria, ?array $orderBy = null, ?int $page = null,  ?int $perPage = null)
+    public function paginate(Criteria $criteria, ?int $page = null,  ?int $perPage = null)
     {
         $this->setCurrentPage($page);
         if(is_null($perPage) == false){
@@ -76,7 +76,8 @@ class PaginationService
         }
         $this->setTotal($criteria);
         $this->setCalculatedParams();
-        $rows = $this->repository->findBy($criteria, $orderBy, $this->perPage, $this->offset);
+        $this->addCriteriaLimit($criteria);
+        $rows = $this->repository->matching($criteria)->toArray();
 
         return $this->buildPagination($rows);
 
@@ -86,25 +87,25 @@ class PaginationService
      * Builds pagination array for nested set nodes
      *
      * @param $node
-     * @param array $criteria
-     * @param array|null $orderBy
+     * @param Criteria $criteria
      * @param int|null $page
      * @param int|null $perPage
      * @param bool $directChildren
      * @return array
      */
-    public function paginateNodeChildren($node, ?array $orderBy = null, ?int $page = null,  ?int $perPage = null, bool $directChildren = false)
+    public function paginateNodeChildren($node, Criteria $criteria, ?int $page = null,  ?int $perPage = null, bool $directChildren = false)
     {
+        $criteria->setMaxResults($this->perPage)->setFirstResult($this->offset);
         $this->setCurrentPage($page);
         if(is_null($perPage) == false){
             $this->perPage = $perPage;
         }
         $this->setTotalChildren($node, $directChildren);
         $this->setCalculatedParams([]);
-        $rows = $this->repository->findChildrenBy($node, $orderBy, $this->perPage, $this->offset, $directChildren );
+        $this->addCriteriaLimit($criteria);
+        $rows = $this->repository->findChildrenBy($node, $criteria, $directChildren)->toArray();
 
         return $this->buildPagination($rows);
-
     }
 
     /**
@@ -128,7 +129,7 @@ class PaginationService
      */
     private function setTotal($criteria)
     {
-        $this->total = $this->repository->count($criteria);
+        $this->total = $this->repository->matching($criteria)->count();
     }
 
      /**
@@ -187,6 +188,15 @@ class PaginationService
             'perPage' => $this->perPage,
             'data' => $data
         ];
+    }
+
+    /**
+     * @param Criteria $criteria
+     * @return Criteria
+     */
+    private function addCriteriaLimit(Criteria $criteria):Criteria
+    {
+        return $criteria->setMaxResults($this->perPage)->setFirstResult($this->offset);
     }
 
 }
