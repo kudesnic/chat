@@ -9,6 +9,7 @@
         "gedmo/doctrine-extensions": "^2.4",
         "gesdinet/jwt-refresh-token-bundle": "^0.9.1",
         "lexik/jwt-authentication-bundle": "^2.6",
+        "martin-georgiev/postgresql-for-doctrine": "^1.4",
         "sensio/framework-extra-bundle": "^5.5",
         "symfony/console": "5.0.*",
         "symfony/dotenv": "5.0.*",

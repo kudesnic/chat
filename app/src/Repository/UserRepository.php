@@ -4,8 +4,11 @@ namespace App\Repository;
 
 use App\Entity\User;
 use Doctrine\Common\Collections\Criteria;
+use Doctrine\ORM\QueryBuilder;
+use Doctrine\ORM\LazyCriteriaCollection;
 use Gedmo\Tool\Wrapper\EntityWrapper;
 use Gedmo\Tree\Entity\Repository\NestedTreeRepository;
+use http\Exception\InvalidArgumentException;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
@@ -24,13 +27,11 @@ class UserRepository extends  NestedTreeRepository implements PasswordUpgraderIn
      * Get nested set children nodes in boundaries of limit and offset
      *
      * @param $node
-     * @param array|null $orderBy
-     * @param int|null $limit
-     * @param int|null $offset
-     * @param false $directChildren
+     * @param Criteria $criteria
+     * @param bool $directChildren
      * @return mixed
      */
-    public function findChildrenBy($node, Criteria $criteria,  bool $directChildren = false)
+    public function findChildrenByCriteria($node, Criteria $criteria,  bool $directChildren = false):LazyCriteriaCollection
     {
         if ($directChildren) {
             $criteria->where(Criteria::expr()->eq('parent', $node));
@@ -41,6 +42,56 @@ class UserRepository extends  NestedTreeRepository implements PasswordUpgraderIn
         $criteria->andWhere(Criteria::expr()->eq('tree_root', $node->getTreeRoot()));
 
         return $this->matching($criteria);
+    }
+
+    /**
+     * Get nested set children nodes in boundaries of limit and offset
+     *
+     * @param $node
+     * @param QueryBuilder $qb
+     * @param bool $directChildren
+     * @param bool $includeNode
+     * @throws InvalidArgumentException
+     * @return QueryBuilder
+     */
+    public function extendChildrenQueryBuilder($node, $qb,  bool $directChildren = false, bool $includeNode = false):QueryBuilder
+    {
+        $meta = $this->getClassMetadata();
+        $config = $this->listener->getConfiguration($this->_em, $meta->name);
+
+        $qb->select('node')
+            ->from($config['useObjectClass'], 'node');
+            if ($node instanceof $meta->name) {
+                $wrapped = new EntityWrapper($node, $this->_em);
+                if (!$wrapped->hasValidIdentifier()) {
+                    throw new \InvalidArgumentException("Node is not managed by UnitOfWork");
+                }
+                if ($directChildren) {
+                    $qb->where($qb->expr()->eq('node.'.$config['parent'], ':pid'));
+                    $qb->setParameter('pid', $wrapped->getIdentifier());
+                } else {
+                    $left = $wrapped->getPropertyValue($config['left']);
+                    $right = $wrapped->getPropertyValue($config['right']);
+                    if ($left && $right) {
+                        $qb->where($qb->expr()->lt('node.'.$config['right'], $right));
+                        $qb->andWhere($qb->expr()->gt('node.'.$config['left'], $left));
+                    }
+                }
+                if (isset($config['root'])) {
+                    $qb->andWhere($qb->expr()->eq('node.'.$config['root'], ':rid'));
+                    $qb->setParameter('rid', $wrapped->getPropertyValue($config['root']));
+                }
+                if ($includeNode) {
+                    $idField = $meta->getSingleIdentifierFieldName();
+                    $qb->where('('.$qb->getDqlPart('where').') OR node.'.$idField.' = :rootNode');
+                    $qb->setParameter('rootNode', $node);
+                }
+            } else {
+                throw new \InvalidArgumentException("Node is not related to this repository");
+            }
+
+
+        return $qb;
     }
 
     /**
@@ -93,6 +144,20 @@ class UserRepository extends  NestedTreeRepository implements PasswordUpgraderIn
         return (bool)$count;
     }
 
+    /**
+     * Return Query Builder for nodes with same tree
+     *
+     * @param $parentNode
+     * @return QueryBuilder
+     */
+    public function getSameTreeUserQuery($parentNode):QueryBuilder
+    {
+        return $this->createQueryBuilder('node')
+            ->select('node')
+            ->andWhere('node.tree_root = :tree_root')
+            ->setParameter('tree_root', $parentNode->getTreeRoot())
+            ->orderBy('node.name', 'ASC');
+    }
 
     /**
      * Checks whether parentNode and childNode in the one tree or not
@@ -201,32 +266,5 @@ class UserRepository extends  NestedTreeRepository implements PasswordUpgraderIn
     
         return (bool)$count;
     }
-    // /**
-    //  * @return Users[] Returns an array of Users objects
-    //  */
-    /*
-    public function findByExampleField($value)
-    {
-        return $this->createQueryBuilder('u')
-            ->andWhere('u.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('u.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
-    }
-    */
 
-    /*
-    public function findOneBySomeField($value): ?Users
-    {
-        return $this->createQueryBuilder('u')
-            ->andWhere('u.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
-    }
-    */
 }

@@ -9,7 +9,8 @@ use App\Exception\APIResponseException;
 use App\Http\ApiResponse;
 use App\Service\Base64ImageService;
 use App\Service\JWTUserService;
-use App\Service\PaginationService;
+use App\Service\PaginationServiceByCriteria;
+use App\Service\PaginationServiceByQueryBuilder;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\EntityManagerInterface;
 use http\Exception\InvalidArgumentException;
@@ -36,19 +37,23 @@ class UserController extends AbstractController
      * @Route("/user", name="users_list",  defaults={"page": 1},  methods={"GET"})
      *
      * @param Request $request
-     * @param PaginationService $paginationManger
+     * @param PaginationServiceByCriteria $paginationManger
      * @param JWTUserService $userHolder
      * @return ApiResponse
      */
-    public function index(Request $request, PaginationService $paginationManger, JWTUserService $userHolder)
+    public function index(Request $request, EntityManagerInterface $em, PaginationServiceByQueryBuilder $paginationManger, JWTUserService $userHolder)
     {
         $page = $request->query->get('page');
         $user = $userHolder->getUser($request);
-        $criteria = Criteria::create()
-            ->where(Criteria::expr()->eq('tree_root', $user->getTreeRoot()))
-            ->orderBy(['name' =>Criteria::ASC]);
+        $repository = $em->getRepository(User::class);
+        $qb = $repository->getSameTreeUserQuery($user);
+        if($request->query->has('role')){
+            $role = json_encode([$request->query->get('role')], true);
+//            dd('CONTAINS( node.roles, "' . $role . '") = true');
+            $qb->andWhere('CONTAINS( node.roles, \'' . $role . '\') = true');
+        }
         $result = $paginationManger->setRepository(User::class)
-                ->paginate($criteria, $page, null);
+                ->paginate($qb, $page, null);
 
         return new ApiResponse($result);
     }
@@ -59,11 +64,11 @@ class UserController extends AbstractController
      * @Route("/user/children", name="user_list",  defaults={"page": 1},  methods={"GET"})
      *
      * @param Request $request
-     * @param PaginationService $paginationManger
+     * @param PaginationServiceByCriteria $paginationManger
      * @param JWTUserService $userHolder
      * @return ApiResponse
      */
-    public function getChildrenUsers(Request $request, PaginationService $paginationManger, JWTUserService $userHolder)
+    public function getChildrenUsers(Request $request, PaginationServiceByCriteria $paginationManger, JWTUserService $userHolder)
     {
         $page = $request->query->get('page');
         $user = $userHolder->getUser($request);

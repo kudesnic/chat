@@ -11,17 +11,17 @@ use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Normalizer\PropertyNormalizer;
 use Symfony\Component\Serializer\Serializer;
 
-class PaginationService
+abstract class PaginationServiceAbstract
 {
-    private $em;
-    private $objectNormalizer;
-    private $repository;
-    private $total;
-    private $currentPage;
-    private $pagesCount;
-    private $perPage;
-    private $offset;
-    private $normalize = false;
+    protected $em;
+    protected $objectNormalizer;
+    protected $repository;
+    protected $total;
+    protected $currentPage;
+    protected $pagesCount;
+    protected $perPage;
+    protected $offset;
+    protected $normalize = false;
 
     public function __construct(EntityManagerInterface $em, ContainerBagInterface $params, ObjectNormalizer $objectNormalizer)
     {
@@ -38,10 +38,9 @@ class PaginationService
      * Sets the repository for a class.
      *
      * @param string $className
-     *
      * @return self
      */
-    public function setRepository(string $className)
+    public function setRepository(string $className):self
     {
         $this->repository = $this->em->getRepository($className);
 
@@ -52,68 +51,19 @@ class PaginationService
      * gets the repository for a class.
      *
      * @param string $className
-     *
-     * @return self
+     * @return ObjectRepository
      */
     public function getRepository():ObjectRepository
     {
         return $this->repository;
     }
-
-    /**
-     * Builds pagination array
-     *
-     * @param array $criteria
-     * @param int|null $page
-     * @param int|null $perPage
-     * @return array
-     */
-    public function paginate(Criteria $criteria, ?int $page = null,  ?int $perPage = null)
-    {
-        $this->setCurrentPage($page);
-        if(is_null($perPage) == false){
-            $this->perPage = $perPage;
-        }
-        $this->setTotal($criteria);
-        $this->setCalculatedParams();
-        $this->addCriteriaLimit($criteria);
-        $rows = $this->repository->matching($criteria)->toArray();
-
-        return $this->buildPagination($rows);
-
-    }
-
-    /**
-     * Builds pagination array for nested set nodes
-     *
-     * @param $node
-     * @param Criteria $criteria
-     * @param int|null $page
-     * @param int|null $perPage
-     * @param bool $directChildren
-     * @return array
-     */
-    public function paginateNodeChildren($node, Criteria $criteria, ?int $page = null,  ?int $perPage = null, bool $directChildren = false)
-    {
-        $criteria->setMaxResults($this->perPage)->setFirstResult($this->offset);
-        $this->setCurrentPage($page);
-        if(is_null($perPage) == false){
-            $this->perPage = $perPage;
-        }
-        $this->setTotalChildren($node, $directChildren);
-        $this->setCalculatedParams([]);
-        $this->addCriteriaLimit($criteria);
-        $rows = $this->repository->findChildrenBy($node, $criteria, $directChildren)->toArray();
-
-        return $this->buildPagination($rows);
-    }
-
     /**
      * Sets current page
      *
      * @param int|null $page
+     * @return void
      */
-    private function setCurrentPage(?int $page)
+    protected function    setCurrentPage(?int $page):void
     {
         if(is_null($page)){
             $this->currentPage = 1;
@@ -126,27 +76,22 @@ class PaginationService
      * Count total
      *
      * @param $criteria
+     * @return void
      */
-    private function setTotal($criteria)
+    protected function setTotal(Criteria $criteria):void
     {
-        $this->total = $this->repository->matching($criteria)->count();
+        $this->total = $this->repository
+            ->matching($criteria)
+            ->count();
     }
 
-     /**
-     * Count total children for nested set node
-     *
-     * @param $criteria
-     */
-    private function setTotalChildren($node, bool $directChildren = false)
-    {
-        $this->total = $this->repository->countChildren($node, $directChildren);
-    }
 
     /**
      * Sets such calculated params, such as total and pagesCount
      *
+     * @return void
      */
-    private function setCalculatedParams()
+    protected function setCalculatedParams():void
     {
         //round up
         $this->pagesCount = ceil($this->total / $this->perPage);
@@ -161,10 +106,10 @@ class PaginationService
 
     /**
      * @param array|null $rows
-     * @return array
      * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
+     * @return array
      */
-    private function buildPagination(?array $rows)
+    protected function buildPagination(?array $rows):array
     {
         if($this->normalize){
             $classMetadataFactory = null;
@@ -190,13 +135,5 @@ class PaginationService
         ];
     }
 
-    /**
-     * @param Criteria $criteria
-     * @return Criteria
-     */
-    private function addCriteriaLimit(Criteria $criteria):Criteria
-    {
-        return $criteria->setMaxResults($this->perPage)->setFirstResult($this->offset);
-    }
 
 }

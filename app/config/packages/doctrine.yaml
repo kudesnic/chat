@@ -1,6 +1,13 @@
 doctrine:
     dbal:
         url: '%env(resolve:DATABASE_URL)%'
+        types: # register the new types
+            jsonb: MartinGeorgiev\Doctrine\DBAL\Types\Jsonb
+            jsonb[]: MartinGeorgiev\Doctrine\DBAL\Types\JsonbArray
+            smallint[]: MartinGeorgiev\Doctrine\DBAL\Types\SmallIntArray
+            integer[]: MartinGeorgiev\Doctrine\DBAL\Types\IntegerArray
+            bigint[]: MartinGeorgiev\Doctrine\DBAL\Types\BigIntArray
+            text[]: MartinGeorgiev\Doctrine\DBAL\Types\TextArray
 
         # IMPORTANT: You MUST configure your server version,
         # either here or in the DATABASE_URL env var (see .env file)
@@ -22,3 +29,9 @@ doctrine:
                 prefix: Gedmo\Tree\Entity
                 dir: "%kernel.project_dir%/vendor/gedmo/doctrine-extensions/lib/Gedmo/Tree/Entity"
                 is_bundle: false
+        dql:
+            string_functions:
+                # alternative implementation of ALL() and ANY() where subquery is not required, useful for arrays
+
+                # operators for working with array and json(b) data
+                CONTAINS: MartinGeorgiev\Doctrine\ORM\Query\AST\Functions\Contains

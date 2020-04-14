@@ -64,7 +64,7 @@ class User implements UserInterface
 
     /**
      * @Groups("APIGroup")
-     * @ORM\Column(type="json", nullable=false)
+     * @ORM\Column(type="jsonb", nullable=false)
      */
     private $roles = [];
 
