@@ -42,7 +42,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "\t{\n\t\"email\":\"andrey00@gmail.com\",\n\t\"password\":\"12345678a\"\n}",
+							"raw": "\t{\n\t\"email\":\"andrey-super-admin-0@gmail.com\",\n\t\"password\":\"12345678a\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"

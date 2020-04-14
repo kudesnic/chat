@@ -44,6 +44,7 @@ class SecurityController extends AbstractController
         $encodedPassword = $encoder->encodePassword($entity, $request->password);
         $entity->setPassword($encodedPassword);
         $entity->setStatus(User::STATUS_ACTIVE);
+        $entity->setRoles([User::ROLE_SUPER_ADMIN]);
 
         if($request->img_encoded){
             $imgDirectory = User::UPLOAD_DIRECTORY . '/' . $user->getId() . '/' . User::AVATAR_PATH ;

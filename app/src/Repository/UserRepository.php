@@ -155,7 +155,9 @@ class UserRepository extends  NestedTreeRepository implements PasswordUpgraderIn
         return $this->createQueryBuilder('node')
             ->select('node')
             ->andWhere('node.tree_root = :tree_root')
+            ->andWhere('node.id <> :id')
             ->setParameter('tree_root', $parentNode->getTreeRoot())
+            ->setParameter('id', $parentNode->getId())
             ->orderBy('node.name', 'ASC');
     }
 

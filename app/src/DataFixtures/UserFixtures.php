@@ -33,19 +33,35 @@ class UserFixtures extends Fixture
      */
     public function generateOneTree(ObjectManager $manager, $treeKey):void
     {
-        $prev = null;
+        $superAdmin = new EntityUser();
+        $superAdmin->setEmail('andrey-super-admin-' .  $treeKey . '@gmail.com');
+        $superAdmin->setPassword($this->encoder->encodePassword($superAdmin, '12345678a'));
+        $superAdmin->setName('Andrey');
+        $superAdmin->setStatus(User::STATUS_ACTIVE);
+        $superAdmin->setRoles([User::ROLE_SUPER_ADMIN]);
+        $manager->persist($superAdmin);
+        $manager->flush();
+
+        $admin = new EntityUser();
+        $admin->setEmail('andrey-admin' .  $treeKey . '@gmail.com');
+        $admin->setPassword($this->encoder->encodePassword($admin, '12345678a'));
+        $admin->setName('Andrey');
+        $admin->setStatus(User::STATUS_ACTIVE);
+        $admin->setRoles([User::ROLE_ADMIN]);
+        $admin->setParent($superAdmin);
+
+        $manager->persist($admin);
+        $manager->flush();
         for($i=0; $i<30; $i++){
             $user = new EntityUser();
             $user->setEmail('andrey' . $i . $treeKey . '@gmail.com');
             $user->setPassword($this->encoder->encodePassword($user, '12345678a'));
             $user->setName('Andrey');
             $user->setStatus(User::STATUS_ACTIVE);
-            if(is_null($prev) == false){
-                $user->setParent($prev);
-            }
+            $user->setRoles([User::ROLE_MANAGER]);
+            $user->setParent($admin);
             $manager->persist($user);
             $manager->flush();
-            $prev = $user;
         }
     }
 }
