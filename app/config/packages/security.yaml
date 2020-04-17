@@ -8,6 +8,7 @@ security:
         ROLE_MANAGER:       ROLE_USER
         ROLE_ADMIN:         ROLE_MANAGER
         ROLE_SUPER_ADMIN:   ROLE_ADMIN
+        OWNER:   ROLE_SUPER_ADMIN
 
     # https://symfony.com/doc/current/security.html#where-do-users-come-from-user-providers
     providers:
@@ -24,7 +25,7 @@ security:
     firewalls:
 
         login:
-            pattern:  ^/api/login
+            pattern: ^/api/login
             provider: main_user_provider
             stateless: true
             anonymous: true
@@ -35,13 +36,49 @@ security:
                 success_handler:          lexik_jwt_authentication.handler.authentication_success
                 failure_handler:          lexik_jwt_authentication.handler.authentication_failure
 
+        login_en:
+            pattern: ^/api/en/login
+            provider: main_user_provider
+            stateless: true
+            anonymous: true
+            json_login:
+                check_path:               /api/en/login
+                username_path:            email
+                password_path:            password
+                success_handler:          lexik_jwt_authentication.handler.authentication_success
+                failure_handler:          lexik_jwt_authentication.handler.authentication_failure
+
+        login_ru:
+            pattern: ^/api/ru/login
+            provider: main_user_provider
+            stateless: true
+            anonymous: true
+            json_login:
+                check_path:               /api/ru/login
+                username_path:            email
+                password_path:            password
+                success_handler:          lexik_jwt_authentication.handler.authentication_success
+                failure_handler:          lexik_jwt_authentication.handler.authentication_failure
+
+        login_pl:
+            pattern: ^/api/pl/login
+            provider: main_user_provider
+            stateless: true
+            anonymous: true
+            json_login:
+                check_path:               /api/pl/login
+                username_path:            email
+                password_path:            password
+                success_handler:          lexik_jwt_authentication.handler.authentication_success
+                failure_handler:          lexik_jwt_authentication.handler.authentication_failure
+
         refresh:
-            pattern:  ^/api/token/refresh
+            pattern: ^.*\/api\/[a-z]{2}\/token\/refresh|^/api/token/refresh
             provider: main_user_provider
             stateless: true
             anonymous: true
         activation:
-            pattern:  ^/api/activate-user
+            pattern:  ^.*\/api\/[a-z]{2}\/activate-user|^/api/activate-user
             provider: invited_user_provider
             stateless: true
             anonymous: lazy

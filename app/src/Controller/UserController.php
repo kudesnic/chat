@@ -13,6 +13,7 @@ use App\Service\PaginationServiceByCriteria;
 use App\Service\PaginationServiceByQueryBuilder;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Persistence\Proxy;
 use http\Exception\InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
@@ -24,6 +25,8 @@ use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Routing\Annotation\Route;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Symfony\Contracts\Translation\TranslatorInterface;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Entity;
 
 /**
  * Class UserController
@@ -37,9 +40,13 @@ class UserController extends AbstractController
      * @Route("/user", name="users_list",  defaults={"page": 1},  methods={"GET"})
      *
      * @param Request $request
-     * @param PaginationServiceByCriteria $paginationManger
+     * @param EntityManagerInterface $em
+     * @param PaginationServiceByQueryBuilder $paginationManger
      * @param JWTUserService $userHolder
      * @return ApiResponse
+     * @throws \Doctrine\Common\Annotations\AnnotationException
+     * @throws \Lexik\Bundle\JWTAuthenticationBundle\Exception\JWTDecodeFailureException
+     * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
      */
     public function index(Request $request, EntityManagerInterface $em, PaginationServiceByQueryBuilder $paginationManger, JWTUserService $userHolder)
     {
@@ -67,6 +74,9 @@ class UserController extends AbstractController
      * @param PaginationServiceByCriteria $paginationManger
      * @param JWTUserService $userHolder
      * @return ApiResponse
+     * @throws \Doctrine\Common\Annotations\AnnotationException
+     * @throws \Lexik\Bundle\JWTAuthenticationBundle\Exception\JWTDecodeFailureException
+     * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
      */
     public function getChildrenUsers(Request $request, PaginationServiceByCriteria $paginationManger, JWTUserService $userHolder)
     {
@@ -83,22 +93,29 @@ class UserController extends AbstractController
 
     /**
      * @Route("/user/{id}", name="user_show", requirements={"id":"\d+"},  methods={"GET"})
-     * @ParamConverter("id", class="App\Entity\User", options={"id": "id"})
      *
      * @param User $user
      * @param Request $request
      * @param EntityManagerInterface $em
      * @param JWTUserService $userHolder
-     * @throws AuthenticationException
+     * @param TranslatorInterface $translator
      * @return ApiResponse
+     * @throws \Doctrine\Common\Annotations\AnnotationException
+     * @throws \Lexik\Bundle\JWTAuthenticationBundle\Exception\JWTDecodeFailureException
+     * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
      */
-    public function show(User $user, Request $request, EntityManagerInterface $em, JWTUserService $userHolder)
-    {
+    public function show(
+        User $user,
+        Request $request,
+        EntityManagerInterface $em,
+        JWTUserService $userHolder,
+        TranslatorInterface $translator
+    ) {
         $loggedUser = $userHolder->getUser($request);
         $repository = $em->getRepository(User::class);
         $canShow = $repository->areBelongedToTheSameTree($loggedUser, $user);
         if($canShow == false){
-            throw new AccessDeniedHttpException('You can\'t see this user');
+            throw new AccessDeniedHttpException($translator->trans('You can\'t see this user'));
         }
 
         return new ApiResponse($user);
@@ -112,7 +129,9 @@ class UserController extends AbstractController
      * @param JWTUserService $userHolder
      * @param UserPasswordEncoderInterface $encoder
      * @return ApiResponse
-     * @throws \Exception
+     * @throws \Doctrine\Common\Annotations\AnnotationException
+     * @throws \Lexik\Bundle\JWTAuthenticationBundle\Exception\JWTDecodeFailureException
+     * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
      */
     public function inviteUser(
         UserInviteDTORequest $request,
@@ -131,34 +150,39 @@ class UserController extends AbstractController
         $em->persist($userEntity);
         $em->flush($userEntity);
 
-        return new ApiResponse($userEntity);
+        return new ApiResponse($userEntity, 201);
     }
 
     /**
      * @Route("/user/{id}", name="user_update", requirements={"id":"\d+"}, methods={"PUT"})
-     * @ParamConverter("id", class="App\Entity\User", options={"id": "id"})
      *
      * @param User $userToUpdate
      * @param UserUpdateDTORequest $request
      * @param EntityManagerInterface $em
      * @param JWTUserService $userHolder
      * @param Base64ImageService $imageService
-     * @throws AccessDeniedHttpException
+     * @param TranslatorInterface $translator
      * @return ApiResponse
+     * @throws \Doctrine\Common\Annotations\AnnotationException
+     * @throws \Lexik\Bundle\JWTAuthenticationBundle\Exception\JWTDecodeFailureException
+     * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
      */
     public function update(
         User $userToUpdate,
         UserUpdateDTORequest $request,
         EntityManagerInterface $em,
         JWTUserService $userHolder,
-        Base64ImageService $imageService
+        Base64ImageService $imageService,
+        TranslatorInterface $translator
     ) {
         $loggedUser = $userHolder->getUser($request->getRequest());
         $repository = $em->getRepository(get_class($userToUpdate));
 
         $isChild = $repository->isNodeAChild($loggedUser, $userToUpdate);
         if($isChild == false && $loggedUser->getId() != $userToUpdate->getId()){
-            throw new AccessDeniedHttpException('You can not update this user, because it doesn\'t belong to you!');
+            throw new AccessDeniedHttpException(
+                $translator->trans('You can not update this user, because it doesn\'t belong to you!')
+            );
         }
 
         $userEntity = $request->populateEntity($userToUpdate);
@@ -186,24 +210,35 @@ class UserController extends AbstractController
 
     /**
      * @Route("/user/{id}", name="user_delete", requirements={"id":"\d+"},  methods={"DELETE"})
-     * @ParamConverter("id", class="App\Entity\User", options={"id": "id"})
      *
      * @param User $userToDelete
      * @param Request $request
      * @param JWTUserService $userHolder
      * @param EntityManagerInterface $em
-     * @throws AccessDeniedHttpException|AccessDeniedHttpException
+     * @param TranslatorInterface $translator
      * @return ApiResponse
+     * @throws \Doctrine\Common\Annotations\AnnotationException
+     * @throws \Lexik\Bundle\JWTAuthenticationBundle\Exception\JWTDecodeFailureException
+     * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
      */
-    public function destroy(User $userToDelete, Request $request, JWTUserService $userHolder, EntityManagerInterface $em)
-    {
+    public function destroy(
+        User $userToDelete,
+        Request $request,
+        JWTUserService $userHolder,
+        EntityManagerInterface $em,
+        TranslatorInterface $translator
+    ) {
         $loggedUser = $userHolder->getUser($request);
         $repository = $em->getRepository(User::class);
         $isChild = $repository->isNodeAChild($loggedUser, $userToDelete);
         if($loggedUser->getId() == $userToDelete->getId() && $repository->countChildren($userToDelete)){
-            throw new AccessDeniedHttpException('You can not delete yourself, if you have subordinates managers!');
+            throw new AccessDeniedHttpException(
+                $translator->trans('You can not delete yourself, if you have subordinates managers!')
+            );
         } elseif($isChild == false){
-            throw new AccessDeniedHttpException('You can not delete this user, because it doesn\'t belong to you!');
+            throw new AccessDeniedHttpException(
+                $translator->trans('You can not delete this user, because it doesn\'t belong to you!')
+            );
         }
 
         $em->remove($userToDelete);

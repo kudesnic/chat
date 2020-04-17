@@ -7,6 +7,13 @@ use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Lexik\Bundle\JWTAuthenticationBundle\Event\JWTCreatedEvent;
 use Symfony\Component\HttpFoundation\RequestStack;
 
+/**
+ * Event listener that processes JWT token creation event
+ *
+ * @package    Authentication
+ * @author     Andrew Derevinako <andreyy.derevjanko@gmail.com>
+ * @version    1.0
+ */
 class JWTCreatedListener
 {/**
  * @var RequestStack

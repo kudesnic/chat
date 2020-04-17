@@ -5,9 +5,14 @@ namespace App\Service;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\File\File;
 
+/**
+ *  Processes base64 string, converts to file and saves
+ *
+ * @author     Andrew Derevinako <andreyy.derevjanko@gmail.com>
+ * @version    1.0
+ */
 class Base64ImageService
 {
-
     /**
      * @var ParameterBagInterface
      */
@@ -15,7 +20,6 @@ class Base64ImageService
 
     /**
      * Base64ImageService constructor.
-     * @param Base64ImageService $imageService
      * @param ParameterBagInterface $parameters
      */
     public function __construct(ParameterBagInterface $parameters)
@@ -42,7 +46,6 @@ class Base64ImageService
 
         return new File($tmpFile);
     }
-
 
     /**
      * Saves base64 image

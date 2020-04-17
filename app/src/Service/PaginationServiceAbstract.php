@@ -2,7 +2,6 @@
 
 namespace App\Service;
 
-use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ObjectRepository;
 use Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface;
@@ -11,6 +10,12 @@ use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Normalizer\PropertyNormalizer;
 use Symfony\Component\Serializer\Serializer;
 
+/**
+ * Abstract pagination class
+ *
+ * @author     Andrew Derevinako <andreyy.derevjanko@gmail.com>
+ * @version    1.0
+ */
 abstract class PaginationServiceAbstract
 {
     protected $em;
@@ -23,6 +28,13 @@ abstract class PaginationServiceAbstract
     protected $offset;
     protected $normalize = false;
 
+    /**
+     * PaginationServiceAbstract constructor.
+     *
+     * @param EntityManagerInterface $em
+     * @param ContainerBagInterface $params
+     * @param ObjectNormalizer $objectNormalizer
+     */
     public function __construct(EntityManagerInterface $em, ContainerBagInterface $params, ObjectNormalizer $objectNormalizer)
     {
         $this->em = $em;
@@ -50,20 +62,20 @@ abstract class PaginationServiceAbstract
     /**
      * gets the repository for a class.
      *
-     * @param string $className
      * @return ObjectRepository
      */
     public function getRepository():ObjectRepository
     {
         return $this->repository;
     }
+
     /**
      * Sets current page
      *
      * @param int|null $page
      * @return void
      */
-    protected function    setCurrentPage(?int $page):void
+    protected function setCurrentPage(?int $page):void
     {
         if(is_null($page)){
             $this->currentPage = 1;
@@ -71,20 +83,6 @@ abstract class PaginationServiceAbstract
             $this->currentPage = $page;
         }
     }
-
-    /**
-     * Count total
-     *
-     * @param $criteria
-     * @return void
-     */
-    protected function setTotal(Criteria $criteria):void
-    {
-        $this->total = $this->repository
-            ->matching($criteria)
-            ->count();
-    }
-
 
     /**
      * Sets such calculated params, such as total and pagesCount
@@ -134,6 +132,5 @@ abstract class PaginationServiceAbstract
             'data' => $data
         ];
     }
-
 
 }

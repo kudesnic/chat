@@ -16,6 +16,7 @@ use Lexik\Bundle\JWTAuthenticationBundle\TokenExtractor\TokenExtractorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Symfony\Component\Routing\Annotation\Route;
 
 class SecurityController extends AbstractController
@@ -30,6 +31,7 @@ class SecurityController extends AbstractController
      * @param EntityManagerInterface $em
      * @param UserPasswordEncoderInterface $encoder
      * @param AuthenticationSuccessHandler $authHandler
+     * @param Base64ImageService $imageService
      * @return \Lexik\Bundle\JWTAuthenticationBundle\Response\JWTAuthenticationSuccessResponse
      */
     public function register(
@@ -72,6 +74,7 @@ class SecurityController extends AbstractController
      * @param UserPasswordEncoderInterface $passwordEncoder
      * @param InvitedUserProvider $userProvider
      * @param AuthenticationSuccessHandler $authHandler
+     * @param Base64ImageService $imageService
      * @return \Lexik\Bundle\JWTAuthenticationBundle\Response\JWTAuthenticationSuccessResponse
      * @throws \Lexik\Bundle\JWTAuthenticationBundle\Exception\JWTDecodeFailureException
      */
@@ -113,12 +116,14 @@ class SecurityController extends AbstractController
      * @param Request $request
      * @param EntityManagerInterface $em
      * @param InvitedUserAuthenticationSuccessHandler $authHandler
+     * @param TranslatorInterface $translator
      * @return ApiResponse|\Lexik\Bundle\JWTAuthenticationBundle\Response\JWTAuthenticationSuccessResponse
      */
     public function loginForActivation(
         Request $request,
         EntityManagerInterface $em,
-        InvitedUserAuthenticationSuccessHandler $authHandler
+        InvitedUserAuthenticationSuccessHandler $authHandler,
+        TranslatorInterface $translator
     ) {
         $data = json_decode($request->getContent(), true);
         $user = $em->getRepository(User::class)
@@ -129,7 +134,7 @@ class SecurityController extends AbstractController
                 ]
             );
         if(!$user){
-            return new ApiResponse([], 'User not found', [], 401);
+            return new ApiResponse([],401, $translator->trans('User not found'), []);
         }
 
         return $authHandler->handleAuthenticationSuccess($user);

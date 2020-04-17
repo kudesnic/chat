@@ -6,6 +6,13 @@ use App\Entity\User;
 use Lexik\Bundle\JWTAuthenticationBundle\Event\JWTDecodedEvent;
 use Symfony\Component\HttpFoundation\RequestStack;
 
+/**
+ * Event listener that processes onJWTDecoded event and checks whether user active or not
+ *
+ * @package    Authentication
+ * @author     Andrew Derevinako <andreyy.derevjanko@gmail.com>
+ * @version    1.0
+ */
 class JWTDecodedListener
 {
     /**

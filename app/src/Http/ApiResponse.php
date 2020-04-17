@@ -2,6 +2,7 @@
 namespace App\Http;
 
 use Doctrine\Common\Annotations\AnnotationReader;
+use Doctrine\ORM\EntityManager;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
 use Symfony\Component\Serializer\Mapping\Loader\AnnotationLoader;
@@ -14,19 +15,20 @@ class ApiResponse extends JsonResponse
 {
     /**
      * ApiResponse constructor.
-     *
-     * @param mixed|null  $data
+     * @param null $data
      * @param string|null $message
-     * @param array  $errors
-     * @param int    $status
-     * @param array  $headers
-     * @param bool   $json
+     * @param array $errors
+     * @param int $status
+     * @param array $headers
+     * @param bool $json
+     * @throws \Doctrine\Common\Annotations\AnnotationException
+     * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
      */
     public function __construct(
         $data = null,
+        int $status = 200,
         string $message = null,
         array $errors = [],
-        int $status = 200,
         array $headers = [],
         bool $json = false
     ) {
@@ -36,11 +38,12 @@ class ApiResponse extends JsonResponse
     /**
      * Format the API response.
      *
-     * @param mixed|null  $data
+     * @param null $data
      * @param string|null $message
-     * @param array  $errors
-     *
+     * @param array $errors
      * @return array
+     * @throws \Doctrine\Common\Annotations\AnnotationException
+     * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
      */
     private function format($data = null, string $message = null, array $errors = [])
     {
@@ -52,6 +55,12 @@ class ApiResponse extends JsonResponse
         $nameConverter = new CamelCaseToSnakeCaseNameConverter();
         $normalizer = new PropertyNormalizer($classMetadataFactory, $nameConverter);
         $serializer = new Serializer([$normalizer]);
+        //if object is a Doctrine Proxy, then load all object into proxy.
+        //by default proxy has only primary key value, but any other properties are not populated
+        if(is_object($data) && $data instanceof  \Doctrine\Common\Persistence\Proxy){
+            $data->__load();
+        }
+
         //select only properties with @Groups("APIGroup") annotation
         $data = $serializer->normalize($data, null, ['groups' => 'APIGroup']);
 

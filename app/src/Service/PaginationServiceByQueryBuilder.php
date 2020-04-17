@@ -4,16 +4,25 @@ namespace App\Service;
 
 use Doctrine\ORM\QueryBuilder;
 
+/**
+ * Builds pagination based on QueryBuilder
+ *
+ * @author     Andrew Derevinako <andreyy.derevjanko@gmail.com>
+ * @version    1.0
+ */
 class PaginationServiceByQueryBuilder extends  PaginationServiceAbstract
 {
 
     /**
      * Builds pagination array
      *
-     * @param array $qb
+     * @param QueryBuilder $qb
      * @param int|null $page
      * @param int|null $perPage
      * @return array
+     * @throws \Doctrine\ORM\NoResultException
+     * @throws \Doctrine\ORM\NonUniqueResultException
+     * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
      */
     public function paginate(QueryBuilder $qb, ?int $page = null,  ?int $perPage = null):array
     {
@@ -38,6 +47,9 @@ class PaginationServiceByQueryBuilder extends  PaginationServiceAbstract
      * @param int|null $perPage
      * @param bool $directChildren
      * @return array
+     * @throws \Doctrine\ORM\NoResultException
+     * @throws \Doctrine\ORM\NonUniqueResultException
+     * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
      */
     public function paginateNodeChildren(
         $node,
@@ -59,12 +71,13 @@ class PaginationServiceByQueryBuilder extends  PaginationServiceAbstract
     }
 
     /**
-     * Count total
+     * Counts total
      *
-     * @param $criteria
-     * @return void
+     * @param QueryBuilder $qb
+     * @throws \Doctrine\ORM\NoResultException
+     * @throws \Doctrine\ORM\NonUniqueResultException
      */
-    protected function setTotal($qb):void
+    protected function setTotal(QueryBuilder $qb):void
     {
         $selectPart = $qb->getDQLPart('select');
         $orderByPart = $qb->getDQLPart('orderBy');
@@ -81,10 +94,11 @@ class PaginationServiceByQueryBuilder extends  PaginationServiceAbstract
     /**
      * Count total children for nested set node
      *
-     * @param $criteria
-     * @return void
+     * @param QueryBuilder $qb
+     * @throws \Doctrine\ORM\NoResultException
+     * @throws \Doctrine\ORM\NonUniqueResultException
      */
-    protected function setTotalChildren($qb):void
+    protected function setTotalChildren(QueryBuilder $qb):void
     {
         $this->total = $qb->select('COUNT(node)')->getQuery()
             ->getSingleScalarResult();

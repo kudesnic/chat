@@ -1,7 +1,11 @@
 controllers:
     resource: ../../src/Controller/
     type: annotation
-    prefix: api
+    prefix:
+        - api
+        - api/{_locale}
+    defaults:
+            _locale: en
 
 kernel:
     resource: ../../src/Kernel.php

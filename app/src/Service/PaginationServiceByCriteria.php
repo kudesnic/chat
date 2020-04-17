@@ -4,16 +4,23 @@ namespace App\Service;
 
 use Doctrine\Common\Collections\Criteria;
 
+/**
+ * Builds pagination based on Criteria
+ *
+ * @author     Andrew Derevinako <andreyy.derevjanko@gmail.com>
+ * @version    1.0
+ */
 class PaginationServiceByCriteria extends  PaginationServiceAbstract
 {
 
     /**
      * Builds pagination array
      *
-     * @param array $criteria
+     * @param Criteria $criteria
      * @param int|null $page
      * @param int|null $perPage
      * @return array
+     * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
      */
     public function paginate(Criteria $criteria, ?int $page = null,  ?int $perPage = null):array
     {
@@ -40,6 +47,7 @@ class PaginationServiceByCriteria extends  PaginationServiceAbstract
      * @param int|null $perPage
      * @param bool $directChildren
      * @return array
+     * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
      */
     public function paginateNodeChildren(
         $node,
@@ -64,9 +72,8 @@ class PaginationServiceByCriteria extends  PaginationServiceAbstract
         return $this->buildPagination($rows);
     }
 
-
     /**
-     * Count total
+     * Counts total
      *
      * @param $criteria
      * @return void
@@ -76,17 +83,8 @@ class PaginationServiceByCriteria extends  PaginationServiceAbstract
         $this->total = $this->repository->matching($criteria)->count();
     }
 
-
     /**
-     * @param Criteria $criteria
-     * @return Criteria
-     */
-    private function addCriteriaLimit(Criteria $criteria):Criteria
-    {
-        return $criteria->setMaxResults($this->perPage)->setFirstResult($this->offset);
-    }
-    /**
-     * Count total children for nested set node
+     * Counts total children for nested set node
      *
      * @param $node
      * @param bool $directChildren
@@ -97,5 +95,13 @@ class PaginationServiceByCriteria extends  PaginationServiceAbstract
         $this->total = $this->repository->countChildren($node, $directChildren);
     }
 
+    /**
+     * @param Criteria $criteria
+     * @return Criteria
+     */
+    private function addCriteriaLimit(Criteria $criteria):Criteria
+    {
+        return $criteria->setMaxResults($this->perPage)->setFirstResult($this->offset);
+    }
 
 }

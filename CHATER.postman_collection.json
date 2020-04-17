@@ -42,7 +42,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "\t{\n\t\"email\":\"andrey-super-admin-0@gmail.com\",\n\t\"password\":\"12345678a\"\n}",
+							"raw": "\t{\n\t\"email\":\"andrey20@gmail.com\",\n\t\"password\":\"12345678a\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -50,7 +50,7 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8008/api/login",
+							"raw": "http://localhost:8008/api/ru/login",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -58,6 +58,7 @@
 							"port": "8008",
 							"path": [
 								"api",
+								"ru",
 								"login"
 							]
 						}
@@ -217,7 +218,7 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8008/api/login-for-activation",
+							"raw": "http://localhost:8008/api/en/login-for-activation",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -225,6 +226,7 @@
 							"port": "8008",
 							"path": [
 								"api",
+								"en",
 								"login-for-activation"
 							]
 						}
@@ -318,7 +320,7 @@
 							}
 						],
 						"url": {
-							"raw": "http://localhost:8008/api/user?page=1&role=ROLE_ADMIN",
+							"raw": "http://localhost:8008/api/ru/user?page=1&role=ROLE_ADMIN",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -326,6 +328,7 @@
 							"port": "8008",
 							"path": [
 								"api",
+								"ru",
 								"user"
 							],
 							"query": [
@@ -358,7 +361,7 @@
 							}
 						],
 						"url": {
-							"raw": "http://localhost:8008/api/user/249",
+							"raw": "http://localhost:8008/api/user/197",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -367,7 +370,7 @@
 							"path": [
 								"api",
 								"user",
-								"249"
+								"197"
 							]
 						}
 					},
@@ -521,7 +524,7 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8008/api/user/328",
+							"raw": "http://localhost:8008/api/user/197",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -530,7 +533,7 @@
 							"path": [
 								"api",
 								"user",
-								"328"
+								"197"
 							]
 						}
 					},

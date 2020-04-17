@@ -11,6 +11,13 @@ use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
+/**
+ * Event listener that processes such errors as 401, 403, 404 errors and wrap in ApiResponse object
+ *
+ * @package    Authentication
+ * @author     Andrew Derevinako <andreyy.derevjanko@gmail.com>
+ * @version    1.0
+ */
 class ExceptionListener
 {
     /**
@@ -47,7 +54,7 @@ class ExceptionListener
             //we need 401
 //        } elseif ($exception->getCode() != 500)
 //        {
-//            $response = new ApiResponse([], $exception->getMessage(), [], 401);
+//            $response = new ApiResponse([], 401, $exception->getMessage(), []);
 //            $event->setResponse($response);
 //        }
     }
@@ -69,6 +76,6 @@ class ExceptionListener
             $errors = [];
         }
 
-        return new ApiResponse([], $exception->getMessage(), $errors, $statusCode);
+        return new ApiResponse([], $statusCode, $exception->getMessage(), $errors);
     }
 }

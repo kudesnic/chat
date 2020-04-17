@@ -5,6 +5,13 @@ namespace App\EventListener;
 use Lexik\Bundle\JWTAuthenticationBundle\Event\AuthenticationSuccessEvent;
 use Symfony\Component\Security\Core\User\UserInterface;
 
+/**
+ * Event listener that populate login response with data of logged in user
+ *
+ * @package    Authentication
+ * @author     Andrew Derevinako <andreyy.derevjanko@gmail.com>
+ * @version    1.0
+ */
 class AuthenticationSuccessListener
 {
     /**

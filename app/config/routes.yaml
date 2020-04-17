@@ -2,12 +2,36 @@
 #    path: /
 #    controller: App\Controller\DefaultController::index
 
-gesdinet_jwt_refresh_token:
-  path:       /api/token/refresh
+gesdinet_jwt_refresh_token_locale:
+  path: /api/{_locale}/token/refresh
   controller: gesdinet.jwtrefreshtoken::refresh
+  defaults:
+    locale: en
+  requirements:
+    _locale: en|pl|ru
+
+
+gesdinet_jwt_refresh_token:
+  path: /api/token/refresh
+  controller: gesdinet.jwtrefreshtoken::refresh
+
+api_login_locale:
+  path: /api/{_locale}/login
+  methods: POST
+  defaults:
+    locale: en
+  requirements:
+    _locale: en|pl|ru
+
+
 api_login:
   path: /api/login
   methods: POST
-api_user_activation:
-  path: /api/activate-user
+
+api_login_localized:
+  path: /api/{_locale}/login
   methods: POST
+  defaults:
+    locale: en
+    requirements:
+      _locale: en|pl|ru

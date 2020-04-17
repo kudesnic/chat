@@ -176,7 +176,7 @@ class UserRepository extends  NestedTreeRepository implements PasswordUpgraderIn
         $count = $qBuilder
             ->select('COUNT(node)')
             ->andWhere('node.tree_root = :tree_root')
-            ->andWhere('node.id < :child_id')
+            ->andWhere('node.id <= :child_id')
             ->setParameter('tree_root', $parentNode->getTreeRoot())
             ->setParameter('child_id', $childNode->getId())
             ->getQuery()
