@@ -45,7 +45,6 @@ class RegisterDTORequest extends DTORequestAbstract
      */
     public $telephone;
 
-
     /**
      * @var string The hashed password
      * @Assert\NotNull

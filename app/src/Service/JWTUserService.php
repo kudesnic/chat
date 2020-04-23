@@ -5,6 +5,7 @@ namespace App\Service;
 use Lexik\Bundle\JWTAuthenticationBundle\Encoder\JWTEncoderInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\TokenExtractor\TokenExtractorInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
 
 /**
@@ -19,15 +20,21 @@ class JWTUserService
 {
     private $user;
     private $userFromToken;
-    private $encoder;
+    private $JWTEncoder;
     private $extractor;
     private $userProvider;
+    private $userPasswordEncoder;
 
-    public function __construct(JWTEncoderInterface $encoder, TokenExtractorInterface $extractor,   UserProviderInterface $userProvider)
-    {
-        $this->encoder = $encoder;
+    public function __construct(
+        JWTEncoderInterface $JWTEncoder,
+        UserPasswordEncoderInterface $userPasswordEncoder,
+        TokenExtractorInterface $extractor,
+        UserProviderInterface $userProvider
+    ) {
+        $this->JWTEncoder = $JWTEncoder;
         $this->extractor = $extractor;
         $this->userProvider = $userProvider;
+        $this->userPasswordEncoder = $userPasswordEncoder;
     }
 
     /**
@@ -40,7 +47,7 @@ class JWTUserService
         if(is_null($this->user)){
             $token = $this->extractor->extract($request);
             //decode throws an exception in case of wrong token
-            $user = $this->encoder->decode($token);
+            $user = $this->JWTEncoder->decode($token);
             $this->user = $this->userProvider->loadUserByUsername($user['email']);
         }
 
@@ -57,10 +64,16 @@ class JWTUserService
         if(is_null($this->userFromToken)){
             $token = $this->extractor->extract($request);
             //decode throws an exception in case of wrong token
-            $this->userFromToken = $this->encoder->decode($token);
+            $this->userFromToken = $this->JWTEncoder->decode($token);
         }
 
         return $this->userFromToken;
+    }
+
+    public function checkPassword(Request $request, string $plainPassword)
+    {
+        $user = $this->getUser($request);
+        return $this->userPasswordEncoder->isPasswordValid($user, $plainPassword, $user->getSalt());
     }
 
 }

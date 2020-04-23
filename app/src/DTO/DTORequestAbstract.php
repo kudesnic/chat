@@ -1,6 +1,7 @@
 <?php
 namespace App\DTO;
 
+use App\Interfaces\RequestDTOInterface;
 use http\Exception\InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\HttpException;
