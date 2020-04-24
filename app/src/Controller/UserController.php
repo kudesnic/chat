@@ -186,10 +186,9 @@ class UserController extends AbstractController
         }
 
         $userEntity = $request->populateEntity($userToUpdate);
-dd(1);
-        if($request->password ?? $request->oldPassword ){
-//            $encodedPassword = $encoder->encodePassword($entity, $request->password);
-        }
+//        if($request->password ?? $request->oldPassword ){
+////            $encodedPassword = $encoder->encodePassword($entity, $request->password);
+//        }
         if($request->parent_id){
             $parentUser = $repository->find($request->parent_id);
             $userEntity->setParent($parentUser);

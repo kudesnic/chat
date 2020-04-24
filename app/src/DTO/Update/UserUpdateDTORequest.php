@@ -73,7 +73,7 @@ class UserUpdateDTORequest extends DTORequestAbstract implements CheckUserPasswo
     /**
      * @var string
      * @Assert\Expression(
-     *     "this.password  && this.checkUserPassword(value) == true",
+     *     "(!this.password  ) || (this.password  && this.checkUserPassword(value) == true)",
      *     message="Wrong user password!"
      * );
      */
@@ -83,10 +83,9 @@ class UserUpdateDTORequest extends DTORequestAbstract implements CheckUserPasswo
      * @var string The hashed password
      *
      * @Assert\Expression(
-     *     "this.old_password != null",
+     *     "(!value) || (value != null && this.old_password != null)",
      *     message="Old password required!"
      * );
-     * @Assert\NotNull
      * @Assert\Length(
      *      min = 6,
      *      max = 50
@@ -96,7 +95,6 @@ class UserUpdateDTORequest extends DTORequestAbstract implements CheckUserPasswo
 
     /**
      * @var string The hashed password
-     * @Assert\NotNull
      * @Assert\EqualTo(propertyPath = "password")
      */
     public $password_confirmation;
