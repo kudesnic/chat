@@ -36,6 +36,7 @@ class Base64ImageService
     public function convertToFile(string $value): File
     {
         if (strpos($value, ';base64') !== false) {
+            //puts explode(';', $value)[1] into $value
             [, $value] = explode(';', $value);
             [, $value] = explode(',', $value);
         }
@@ -61,7 +62,7 @@ class Base64ImageService
         string $fileDirectory,
         string $fileName,
         ?string $fileTodelete = null
-    ) {
+    ):string {
 
         if(is_null($fileTodelete) == false && file_exists($fileTodelete)){
             unlink($fileTodelete);
