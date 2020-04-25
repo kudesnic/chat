@@ -146,7 +146,14 @@ class UserController extends AbstractController
         //sets random password for invited user, so no one knows it and no one can use it
         $encodedPassword = $encoder->encodePassword($userEntity, bin2hex(random_bytes(10)));
         $userEntity->setPassword($encodedPassword);
-        $userEntity->setParent($user);
+        if($request->parent_id){
+            $repository = $em->getRepository(get_class($userEntity));
+            $parentUser = $repository->find($request->parent_id);
+            $userEntity->setParent($parentUser);
+            $repository->persistAsLastChildOf($userEntity,$parentUser);
+        } else {
+            $userEntity->setParent($user);
+        }
         $em->persist($userEntity);
         $em->flush($userEntity);
 
@@ -161,6 +168,7 @@ class UserController extends AbstractController
      * @param EntityManagerInterface $em
      * @param JWTUserService $userHolder
      * @param Base64ImageService $imageService
+     * @param UserPasswordEncoderInterface $encoder
      * @param TranslatorInterface $translator
      * @return ApiResponse
      * @throws \Doctrine\Common\Annotations\AnnotationException
@@ -173,6 +181,7 @@ class UserController extends AbstractController
         EntityManagerInterface $em,
         JWTUserService $userHolder,
         Base64ImageService $imageService,
+        UserPasswordEncoderInterface $encoder,
         TranslatorInterface $translator
     ) {
         $loggedUser = $userHolder->getUser($request->getRequest());
@@ -186,11 +195,26 @@ class UserController extends AbstractController
         }
 
         $userEntity = $request->populateEntity($userToUpdate);
-//        if($request->password ?? $request->oldPassword ){
-////            $encodedPassword = $encoder->encodePassword($entity, $request->password);
-//        }
+        if($request->roles && $loggedUser->getId() == $userEntity->getId()){
+            throw new AccessDeniedHttpException(
+                $translator->trans('You can not update your role, only your boss can do this')
+            );
+        }
+        //old password validated and checked by DTO
+        if($request->old_password && $request->password){
+            $newEncodedPassword = $encoder->encodePassword($userEntity, $request->password);
+            $userEntity->setPassword($newEncodedPassword);
+        }
         if($request->parent_id){
             $parentUser = $repository->find($request->parent_id);
+            if(
+                in_array(User::ROLE_ADMIN, $parentUser->getRoles())
+                || in_array(User::ROLE_ADMIN, $parentUser->getRoles())
+            ){
+                throw new AccessDeniedHttpException(
+                    $translator->trans('Parent should have ADMIN or SUPER_ADMIN role!')
+                );
+            }
             $userEntity->setParent($parentUser);
             $repository->persistAsLastChildOf($userEntity,$parentUser);
         }
@@ -237,12 +261,11 @@ class UserController extends AbstractController
             throw new AccessDeniedHttpException(
                 $translator->trans('You can not delete yourself, if you have subordinates managers!')
             );
-        } elseif($isChild == false){
+        } elseif($isChild == false && $loggedUser->getId() != $userToDelete->getId()){
             throw new AccessDeniedHttpException(
                 $translator->trans('You can not delete this user, because it doesn\'t belong to you!')
             );
         }
-
         $em->remove($userToDelete);
         $em->flush();
 

@@ -5,3 +5,5 @@ You can not delete this user, because it doesn't belong to you!: You can not del
 User not found: User not found
 Bad credentials, please verify that your username/password are correctly set: Bad credentials, please verify that your username/password are correctly set
 Old password required!: Old password required!
+Parent should have ADMIN or SUPER_ADMIN role!: Parent should have ADMIN or SUPER_ADMIN role!
+You can not update your role, only your boss can do this: You can not update your role, only your boss can do this!

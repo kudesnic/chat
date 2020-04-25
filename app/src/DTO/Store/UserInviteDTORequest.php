@@ -44,4 +44,9 @@ class UserInviteDTORequest extends DTORequestAbstract
      */
     public $roles = [];
 
+    /**
+     * @CustomValidators\EntityInTheSameTree(entityClass = User::class, id = "id")
+     */
+    public $parent_id = [];
+
 }

@@ -15,7 +15,7 @@ class UserRoles extends Constraint
      */
     public function getWrongRoleMessage()
     {
-        return 'The value {{ value }} is not an allowed role. Allowed roles are:' . implode(', ', User::PUBLIC_ROLES);
+        return 'The value {{ value }} is not an allowed role. Allowed roles are: {{ allowedRoles }}';
     }
 
     /**
@@ -24,6 +24,13 @@ class UserRoles extends Constraint
     public function getWrongTypeMessage()
     {
         return 'The value {{ value }} is not an array';
+    }
+
+    public $rolesArray = User::PUBLIC_ROLES;
+
+    public function getRequiredOptions()
+    {
+        return [];
     }
 
 

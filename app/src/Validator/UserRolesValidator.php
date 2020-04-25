@@ -23,9 +23,10 @@ class UserRolesValidator extends ImageValidator
                 ->addViolation();
         } else {
             foreach ($value as $role){
-                if(in_array($role, User::PUBLIC_ROLES) == false){
+                if(in_array($role, $constraint->rolesArray) == false){
                     $this->context->buildViolation($constraint->getWrongRoleMessage())
                         ->setParameter('{{ value }}', $role)
+                        ->setParameter('{{ allowedRoles }}', $constraint->rolesArray)
                         ->addViolation();
                 }
             }
