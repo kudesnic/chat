@@ -26,7 +26,10 @@
         "symfony/yaml": "5.0.*"
     },
     "require-dev": {
+        "dama/doctrine-test-bundle": "^6.3",
         "doctrine/doctrine-fixtures-bundle": "^3.3",
+        "liip/functional-test-bundle": "^4.0.0",
+        "liip/test-fixtures-bundle": "^1.7",
         "symfony/maker-bundle": "^1.14",
         "symfony/phpunit-bridge": "^5.0"
     },

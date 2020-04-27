@@ -52,7 +52,7 @@ class UserFixtures extends Fixture
 
         $manager->persist($admin);
         $manager->flush();
-        for($i=0; $i<30; $i++){
+        for($i=0; $i<3; $i++){
             $user = new EntityUser();
             $user->setEmail('andrey' . $i . $treeKey . '@gmail.com');
             $user->setPassword($this->encoder->encodePassword($user, '12345678a'));

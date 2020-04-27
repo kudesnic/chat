@@ -4,6 +4,7 @@ namespace App\Tests\Service;
 
 use App\Service\Base64ImageService;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\File\File;
 
 /**

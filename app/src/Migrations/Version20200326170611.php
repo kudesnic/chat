@@ -21,7 +21,7 @@ final class Version20200326170611 extends AbstractMigration
     {
         // this up() migration is auto-generated, please modify it to your needs
         $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'postgresql', 'Migration can only be executed safely on \'postgresql\'.');
-
+        $this->addSql('CREATE SEQUENCE users_id_seq INCREMENT BY 1 MINVALUE 1 START 1');
         $this->addSql('CREATE TABLE users (id INT NOT NULL, tree_root INT DEFAULT NULL, parent_id INT DEFAULT NULL, email VARCHAR(180) NOT NULL, img VARCHAR(255) DEFAULT NULL, name VARCHAR(255) NOT NULL, telephone VARCHAR(15) DEFAULT NULL, roles JSON NOT NULL, password VARCHAR(255) NOT NULL, lft INT NOT NULL, lvl INT NOT NULL, rgt INT NOT NULL, status VARCHAR(10) CHECK (status IN (\'active\', \'invited\')) NOT NULL, created TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL, updated TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL, PRIMARY KEY(id))');
         $this->addSql('CREATE UNIQUE INDEX UNIQ_1483A5E9E7927C74 ON users (email)');
         $this->addSql('CREATE INDEX IDX_1483A5E9A977936C ON users (tree_root)');
@@ -40,6 +40,7 @@ final class Version20200326170611 extends AbstractMigration
         $this->addSql('CREATE SCHEMA public');
         $this->addSql('ALTER TABLE users DROP CONSTRAINT FK_1483A5E9A977936C');
         $this->addSql('ALTER TABLE users DROP CONSTRAINT FK_1483A5E9727ACA70');
+        $this->addSql('DROP SEQUENCE users_id_seq CASCADE');
         $this->addSql('DROP TABLE users');
         $this->addSql('DROP TABLE refresh_tokens');
     }
