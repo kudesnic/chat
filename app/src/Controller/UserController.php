@@ -15,6 +15,7 @@ use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\Proxy;
 use http\Exception\InvalidArgumentException;
+use Lexik\Bundle\JWTAuthenticationBundle\Security\Http\Authentication\AuthenticationSuccessHandler;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -182,7 +183,8 @@ class UserController extends AbstractController
         JWTUserService $userHolder,
         Base64ImageService $imageService,
         UserPasswordEncoderInterface $encoder,
-        TranslatorInterface $translator
+        TranslatorInterface $translator,
+        AuthenticationSuccessHandler $authHandler
     ) {
         $loggedUser = $userHolder->getUser($request->getRequest());
         $repository = $em->getRepository(get_class($userToUpdate));
@@ -230,8 +232,11 @@ class UserController extends AbstractController
         $repository->recover();
         $em->flush($userEntity);
 
-
-        return new ApiResponse($userEntity);
+        if($request->email){
+            return $authHandler->handleAuthenticationSuccess($userEntity);
+        } else {
+            return new ApiResponse($userEntity);
+        }
     }
 
     /**
