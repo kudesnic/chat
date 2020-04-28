@@ -171,6 +171,7 @@ class UserController extends AbstractController
      * @param Base64ImageService $imageService
      * @param UserPasswordEncoderInterface $encoder
      * @param TranslatorInterface $translator
+     * @param AuthenticationSuccessHandler $authHandler
      * @return ApiResponse
      * @throws \Doctrine\Common\Annotations\AnnotationException
      * @throws \Lexik\Bundle\JWTAuthenticationBundle\Exception\JWTDecodeFailureException

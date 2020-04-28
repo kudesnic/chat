@@ -50,39 +50,34 @@ class JWTUserServiceTest extends WebTestCase
         $this->service = self::$container->get(JWTUserService::class);
     }
 
-    /**
-     * @param Request $request
-     * @return \Symfony\Component\Security\Core\User\UserInterface
-     * @throws \Lexik\Bundle\JWTAuthenticationBundle\Exception\JWTDecodeFailureException
-     */
     public function testGetUser()
     {
         $client = $this->createAuthenticatedClient('andrey-super-admin-1@gmail.com', '12345678a');
-        $client->request('POST', '/api/login');
+        //just to get new request object for authenticated user. Route api/login used only because we aware that it exists
+        $client->request('POST', 'api/login');
         $user = $this->service->getUser($client->getRequest());
         $this->assertInstanceOf(UserInterface::class, $user);
     }
-//
-//    /**
-//     * @param Request $request
-//     * @return array
-//     * @throws \Lexik\Bundle\JWTAuthenticationBundle\Exception\JWTDecodeFailureException
-//     */
-//    public function getUserDataFromToken(Request $request)
-//    {
-//        if(is_null($this->userFromToken)){
-//            $token = $this->extractor->extract($request);
-//            //decode throws an exception in case of wrong token
-//            $this->userFromToken = $this->JWTEncoder->decode($token);
-//        }
-//
-//        return $this->userFromToken;
-//    }
-//
-//    public function checkPassword(Request $request, string $plainPassword)
-//    {
-//        $user = $this->getUser($request);
-//        return $this->userPasswordEncoder->isPasswordValid($user, $plainPassword, $user->getSalt());
-//    }
+
+    public function testGetUserDataFromToken()
+    {
+        $client = $this->createAuthenticatedClient('andrey-super-admin-1@gmail.com', '12345678a');
+        $client->request('POST', 'api/login');
+        $userData = $this->service->getUserDataFromToken($client->getRequest());
+        $this->assertIsArray($userData);
+        $this->assertEquals($userData['email'], 'andrey-super-admin-1@gmail.com');
+
+        return $this->userFromToken;
+    }
+
+    public function testCheckPassword()
+    {
+        $client = $this->createAuthenticatedClient('andrey-super-admin-1@gmail.com', '12345678a');
+        $client->request('POST', 'api/login');
+        $valid = $this->service->checkPassword($client->getRequest(), '12345678a');
+        $this->assertEquals(true, $valid);
+        $invalid = $this->service->checkPassword($client->getRequest(), 'wrong_password');
+        $this->assertEquals(false, $invalid);
+    }
 
 }

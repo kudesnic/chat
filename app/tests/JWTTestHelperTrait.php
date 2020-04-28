@@ -35,6 +35,7 @@ trait JWTTestHelperTrait
         $data = json_decode($client->getResponse()->getContent(), true);
 
         $client->setServerParameter('HTTP_Authorization', sprintf('Bearer %s', $data['token']));
+        $client->setServerParameter('CONTENT_TYPE', 'application/json');
 
         return $client;
     }

@@ -70,7 +70,13 @@ class JWTUserService
         return $this->userFromToken;
     }
 
-    public function checkPassword(Request $request, string $plainPassword)
+    /**
+     * @param Request $request
+     * @param string $plainPassword
+     * @return bool
+     * @throws \Lexik\Bundle\JWTAuthenticationBundle\Exception\JWTDecodeFailureException
+     */
+    public function checkPassword(Request $request, string $plainPassword):bool
     {
         $user = $this->getUser($request);
         return $this->userPasswordEncoder->isPasswordValid($user, $plainPassword, $user->getSalt());
