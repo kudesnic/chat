@@ -107,6 +107,12 @@ class User implements UserInterface
     private $root;
 
     /**
+     * @Groups("APIGroup")
+     * @ORM\Column(name="parent_id", type="integer", nullable=true)
+     */
+    private $parent_id;
+
+    /**
      * @Gedmo\TreeParent
      * @ORM\ManyToOne(targetEntity="User", inversedBy="children")
      * @ORM\JoinColumn(name="parent_id", referencedColumnName="id", onDelete="CASCADE")
@@ -291,6 +297,11 @@ class User implements UserInterface
     public function getParent()
     {
         return $this->parent;
+    }
+
+    public function getParentId()
+    {
+        return $this->parent_id;
     }
 
     public function getStatus(): string

@@ -210,10 +210,7 @@ class UserController extends AbstractController
         }
         if($request->parent_id){
             $parentUser = $repository->find($request->parent_id);
-            if(
-                in_array(User::ROLE_ADMIN, $parentUser->getRoles())
-                || in_array(User::ROLE_ADMIN, $parentUser->getRoles())
-            ){
+            if(!in_array(User::ROLE_ADMIN, $parentUser->getRoles())){
                 throw new AccessDeniedHttpException(
                     $translator->trans('Parent should have ADMIN or SUPER_ADMIN role!')
                 );

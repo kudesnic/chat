@@ -43,15 +43,25 @@ class UserFixtures extends Fixture
         $manager->flush();
 
         $admin = new EntityUser();
-        $admin->setEmail('andrey-admin' .  $treeKey . '@gmail.com');
+        $admin->setEmail('andrey-admin' .  $treeKey . 0 . '@gmail.com');
         $admin->setPassword($this->encoder->encodePassword($admin, '12345678a'));
         $admin->setName('Andrey');
         $admin->setStatus(User::STATUS_ACTIVE);
         $admin->setRoles([User::ROLE_ADMIN]);
         $admin->setParent($superAdmin);
-
         $manager->persist($admin);
         $manager->flush();
+
+        $admin = new EntityUser();
+        $admin->setEmail('andrey-admin' .  $treeKey . 1 . '@gmail.com');
+        $admin->setPassword($this->encoder->encodePassword($admin, '12345678a'));
+        $admin->setName('Andrey');
+        $admin->setStatus(User::STATUS_ACTIVE);
+        $admin->setRoles([User::ROLE_ADMIN]);
+        $admin->setParent($superAdmin);
+        $manager->persist($admin);
+        $manager->flush();
+
         for($i=0; $i<3; $i++){
             $user = new EntityUser();
             $user->setEmail('andrey' . $i . $treeKey . '@gmail.com');
