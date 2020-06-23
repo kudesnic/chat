@@ -266,6 +266,9 @@
     "react/stream": {
         "version": "v1.1.1"
     },
+    "react/zmq": {
+        "version": "v0.4.0"
+    },
     "sebastian/code-unit": {
         "version": "1.0.0"
     },

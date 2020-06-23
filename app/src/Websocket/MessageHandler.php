@@ -14,7 +14,7 @@ use SplObjectStorage;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
-class MessageHandler implements WampServerInterface
+class MessageHandler
 {
 
     protected $container;

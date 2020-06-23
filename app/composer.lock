@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f090c211391788d52d533a212f122678",
+    "content-hash": "90bf1859b5651c1b4269668742d6aefe",
     "packages": [
         {
             "name": "behat/transliterator",
@@ -2770,6 +2770,47 @@
                 "writable"
             ],
             "time": "2020-05-04T10:17:57+00:00"
+        },
+        {
+            "name": "react/zmq",
+            "version": "v0.4.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/friends-of-reactphp/zmq.git",
+                "reference": "13dec0bd2397adcc5d6aa54c8d7f0982fba66f39"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/friends-of-reactphp/zmq/zipball/13dec0bd2397adcc5d6aa54c8d7f0982fba66f39",
+                "reference": "13dec0bd2397adcc5d6aa54c8d7f0982fba66f39",
+                "shasum": ""
+            },
+            "require": {
+                "evenement/evenement": "^3.0 || ^2.0",
+                "ext-zmq": "*",
+                "php": ">=5.4.0",
+                "react/event-loop": "^1.0 || ^0.5 || ^0.4"
+            },
+            "require-dev": {
+                "ext-pcntl": "*",
+                "phpunit/phpunit": "~4.8.35 || ~5.7 || ~6.4"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "React\\ZMQ\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "ZeroMQ bindings for React.",
+            "keywords": [
+                "zeromq",
+                "zmq"
+            ],
+            "time": "2018-05-18T15:27:55+00:00"
         },
         {
             "name": "sensio/framework-extra-bundle",
@@ -8223,7 +8264,8 @@
     "platform": {
         "php": "^7.2.5",
         "ext-ctype": "*",
-        "ext-iconv": "*"
+        "ext-iconv": "*",
+        "ext-zmq": "^1.1"
     },
     "platform-dev": []
 }
