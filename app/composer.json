@@ -26,7 +26,8 @@
         "symfony/translation": "5.0.*",
         "symfony/twig-pack": "^1.0",
         "symfony/validator": "5.0.*",
-        "symfony/yaml": "5.0.*"
+        "symfony/yaml": "5.0.*",
+        "voryx/thruway": "^0.6.0"
     },
     "require-dev": {
         "dama/doctrine-test-bundle": "^6.3",
