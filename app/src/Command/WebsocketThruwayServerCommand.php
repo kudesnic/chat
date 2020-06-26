@@ -1,6 +1,7 @@
 <?php
 namespace App\Command;
 
+use App\Websocket\InternalClient;
 use App\Websocket\MessageHandler2;
 use App\Websocket\Pusher;
 use Doctrine\ORM\EntityManagerInterface;
@@ -59,7 +60,25 @@ class WebsocketThruwayServerCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-       $this->startServer();
+//        $router = new Router();
+//
+//        $router->registerModule(new RatchetTransportProvider("0.0.0.0", 3001));   // use 0.0.0.0 if you want to expose outside world
+//
+//// common realm     ( realm1 )
+//        $router->registerModule(
+//            new InternalClient()    // instantiate the Socket class now
+//        );
+//
+//        $router->start();
+        $loop   = Factory::create();
+        $pusher = new InternalClient("realm1", $loop);
+
+
+
+        $router = new Router($loop);
+        $router->addInternalClient($pusher);
+        $router->addTransportProvider(new RatchetTransportProvider("0.0.0.0", 3001));
+        $router->start();
     }
 
 
