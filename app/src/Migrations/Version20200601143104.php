@@ -22,10 +22,12 @@ final class Version20200601143104 extends AbstractMigration
         // this up() migration is auto-generated, please modify it to your needs
         $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'postgresql', 'Migration can only be executed safely on \'postgresql\'.');
 
+
+        $this->addSql('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";');
         $this->addSql('CREATE SEQUENCE chat_seq INCREMENT BY 1 MINVALUE 1 START 1');
         $this->addSql('CREATE SEQUENCE message_seq INCREMENT BY 1 MINVALUE 1 START 1');
         $this->addSql('CREATE SEQUENCE project_seq INCREMENT BY 1 MINVALUE 1 START 1');
-        $this->addSql('CREATE TABLE chat (id INT NOT NULL, user_id INT NOT NULL, strategy VARCHAR(32) NOT NULL, PRIMARY KEY(id))');
+        $this->addSql('CREATE TABLE chat (id INT NOT NULL, uuid uuid DEFAULT uuid_generate_v4 (), user_id INT NOT NULL, strategy VARCHAR(32) NOT NULL, PRIMARY KEY(id))');
         $this->addSql('CREATE INDEX IDX_659DF2AAA76ED395 ON chat (user_id)');
         $this->addSql('CREATE TABLE message (id BIGINT NOT NULL, chat_id INT NOT NULL, parent_id BIGINT DEFAULT NULL, user_id INT NOT NULL, text VARCHAR(32767) DEFAULT NULL, client_id INT DEFAULT NULL, file_path VARCHAR(255) DEFAULT NULL, "order" INT NOT NULL, PRIMARY KEY(id))');
         $this->addSql('CREATE INDEX IDX_B6BD307F1A9A7125 ON message (chat_id)');
@@ -50,6 +52,7 @@ final class Version20200601143104 extends AbstractMigration
         // this down() migration is auto-generated, please modify it to your needs
         $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'postgresql', 'Migration can only be executed safely on \'postgresql\'.');
 
+        $this->addSql('DROP EXTENSION IF EXISTS "uuid-ossp";');
         $this->addSql('CREATE SCHEMA public');
         $this->addSql('ALTER TABLE message DROP CONSTRAINT FK_B6BD307F1A9A7125');
         $this->addSql('ALTER TABLE message DROP CONSTRAINT FK_B6BD307F727ACA70');

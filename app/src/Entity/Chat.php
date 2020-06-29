@@ -5,6 +5,8 @@ namespace App\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Ramsey\Uuid\Doctrine\UuidGenerator;
+use Ramsey\Uuid\UuidInterface;
 
 
 /**
@@ -16,9 +18,20 @@ class Chat
      * @ORM\Id()
      * @ORM\GeneratedValue(strategy="SEQUENCE")
      * @ORM\SequenceGenerator(sequenceName="chat_seq", initialValue=1)
-     * @ORM\Column(type="integer")
+     * @ORM\Column(type="uuid", unique=true)
      */
     private $id;
+
+    /**
+     * The internal primary identity key.
+     *
+     * @var UuidInterface
+     *
+     * @ORM\Column(type="uuid", unique=true)
+     * @ORM\GeneratedValue(strategy="CUSTOM")
+     * @ORM\CustomIdGenerator(class=UuidGenerator::class)
+     */
+    protected $uuid;
 
     /**
      * @ORM\Column(type="integer")
@@ -51,6 +64,10 @@ class Chat
         return $this->id;
     }
 
+    public function getUuid(): string
+    {
+        return $this->uuid;
+    }
 
     public function getUserId(): ?int
     {
