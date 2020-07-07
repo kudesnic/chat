@@ -12,6 +12,7 @@
         "gesdinet/jwt-refresh-token-bundle": "^0.9.1",
         "lexik/jwt-authentication-bundle": "^2.6",
         "martin-georgiev/postgresql-for-doctrine": "^1.4",
+        "nelmio/cors-bundle": "^2.0",
         "ramsey/uuid-doctrine": "^1.6",
         "react/zmq": "^0.4.0",
         "sensio/framework-extra-bundle": "^5.5",

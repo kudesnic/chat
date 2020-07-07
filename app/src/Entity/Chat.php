@@ -5,7 +5,9 @@ namespace App\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use PHPUnit\Framework\Constraint\ExceptionMessage;
 use Ramsey\Uuid\Doctrine\UuidGenerator;
+use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 
 
@@ -14,24 +16,30 @@ use Ramsey\Uuid\UuidInterface;
  */
 class Chat
 {
-    /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue(strategy="SEQUENCE")
-     * @ORM\SequenceGenerator(sequenceName="chat_seq", initialValue=1)
-     * @ORM\Column(type="uuid", unique=true)
-     */
-    private $id;
-
+    const STRATEGY_INTERNAL_CHAT = 'internal_chat';
+    const STRATEGY_EXTERNAL_CHAT = 'external_chat';
+    const STRATEGIES = [
+        self::STRATEGY_INTERNAL_CHAT,
+        self::STRATEGY_EXTERNAL_CHAT
+    ];
     /**
      * The internal primary identity key.
      *
      * @var UuidInterface
      *
-     * @ORM\Column(type="uuid", unique=true)
-     * @ORM\GeneratedValue(strategy="CUSTOM")
-     * @ORM\CustomIdGenerator(class=UuidGenerator::class)
+     * @ORM\Column(type="uuid")
      */
     protected $uuid;
+
+    /**
+     * IMPORTANT! This field annotation must be after uuid in list of properties, to prevent
+     * Doctrine will use UuidGenerator as $`class->idGenerator`!
+     * @ORM\Id()
+     * @ORM\GeneratedValue(strategy="SEQUENCE")
+     * @ORM\SequenceGenerator(sequenceName="chat_seq", initialValue=1)
+     * @ORM\Column(type="integer")
+     */
+    private $id;
 
     /**
      * @ORM\Column(type="integer")
@@ -54,9 +62,11 @@ class Chat
      */
     private $user;
 
+
     public function __construct()
     {
         $this->message = new ArrayCollection();
+        $this->uuid = Uuid::uuid4();
     }
 
     public function getId(): ?int
@@ -88,6 +98,9 @@ class Chat
 
     public function setStrategy(string $strategy): self
     {
+        if(!in_array($strategy, self::STRATEGIES)){
+            throw new \Exception('Chat:strategy has to be one of the next values:' . implode(', ', self::STRATEGIES));
+        }
         $this->strategy = $strategy;
 
         return $this;

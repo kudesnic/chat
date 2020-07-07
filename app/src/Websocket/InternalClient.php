@@ -4,6 +4,7 @@ namespace App\Websocket;
 
 use App\Entity\Chat;
 use App\Entity\Message;
+use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Security\Authentication\Token\JWTUserToken;
 use React\EventLoop\Factory;
@@ -28,12 +29,16 @@ class InternalClient extends Client
      */
     private $activeTopics = []; // topic equal to chat
     private $chatUiidToIdMapping = [];
+    private $userIdToUserTopicId = [];
 
     public function __construct(ContainerInterface $container, EntityManagerInterface $em, $realm, $loop)
     {
         $this->container = $container;
         $this->em = $em;
         $this->activeTopics = new \SplObjectStorage();
+
+
+        parent::__construct($realm, $loop);
     }
 
     /**
@@ -57,39 +62,96 @@ class InternalClient extends Client
     /**
      * Handle get PHP version
      *
-     * @return Chat
+     * @param $args
+     * @return array
      */
-    public function createChat($args):Chat
+    public function createChat($args):array
     {
-        $args = json_decode($args, true);
-        if(isset($args['userToken'])){
+        $data = $args[0];
+        if(isset($data->userToken)){
             //1st app message with connected user
 
             //a user auth, else, app sending message auth
             echo "Check user credentials\n";
             //get credentials
-            $jwt_manager = $this->container->get('lexik_jwt_authentication.jwt_manager');
-            $token = new JWTUserToken();
-            $token->setRawToken($args['userToken']);
-            $payload = $jwt_manager->decode($token);
-
+            $jwt_encoder = $this->container->get('lexik_jwt_authentication.encoder');
+            try{
+                $payload = $jwt_encoder->decode($data->userToken);
+            } catch (\Exception $e){
+                $this->getSession()->close($e->getMessage());
+                return ['error' => $e->getMessage()];
+            }
             //getUser by email
             if(!$user = $this->getUserByEmail($payload['email'])){
                 $this->getSession()->close();
+                return ['error' => 'Can\'t find a user for this token'];
             }
             $chat = new Chat();
             $chat->setUser($user);
+            $chat->setStrategy(Chat::STRATEGY_INTERNAL_CHAT);
             $this->em->persist($chat);
             $this->em->flush($chat);
             $this->getSession()->subscribe($chat->getUuid(), [$this, 'allEvents']);
             $this->chatUiidToIdMapping[$chat->getUuid()] = $chat->getId(); // TODO: Remove mapping element in onCLose and onUnsubscribe events
-            $this->getCaller()->call($this->getSession(), 'connectToNewChat', ['chat_uiid' => $chat->getUuid()]);
+//            $this->getCaller()->call($this->getSession(), 'connectToNewChat', ['chat_uiid' => $chat->getUuid()]);
+            //if user online
+            if(isset($this->userIdToUserTopicId[$data->callee_id])){
+                $this->getSession()->publish($this->userIdToUserTopicId[$data->callee_id], ['type' => 'income_chat', 'chat_uuid' => $chat->getUuid()], ['exclude_me' => true]);
+            }
+
         } else {
             //error
             Logger::info($this, '-------------External clients tries to create a chat');///TODO: add support for external client
         }
 
-        return $chat;
+        return ['chat_uuid' => $chat->getUuid()];
+    }
+
+    /**
+     * Subscribes client to main personal user topic.
+     * THis topic handels income messages, info about online users and so on
+     *
+     * @param $args
+     * @return array
+     * @throws \Exception
+     */
+    public function getUserTopic($args):array
+    {
+        $data = $args[0];
+        if(isset($data->userToken)){
+            //1st app message with connected user
+
+            $user = $this->getAuthenticatedUser($data->userToken);
+
+            $userTopicId = uniqid(random_bytes(4), true);
+            $this->userIdTouserTopicId[$user->getId()] = $userTopicId;
+            $this->getSession()->subscribe($userTopicId, [$this, 'allEvents']);
+
+        } else {
+            //error
+            Logger::info($this, '-------------External clients tries to connect to main user topic');///TODO: add support for external client
+        }
+
+        return ['user_topic_id' => $userTopicId];
+    }
+
+    private function getAuthenticatedUser(string $token):? User
+    {
+        //a user auth, else, app sending message auth
+        echo "Check user credentials\n";
+        //get credentials
+        $jwt_manager = $this->container->get('lexik_jwt_authentication.jwt_manager');
+        $token = new JWTUserToken();
+        $token->setRawToken($token);
+        $payload = $jwt_manager->decode($token);
+
+        //getUser by email
+        if(!$user = $this->getUserByEmail($payload['email'])){
+            $this->getCaller()->call($this->getSession(), 'authError', ['message' => 'User token is incorrect']);
+            $this->getSession()->close();
+        }
+
+        return $user;
     }
 
     /**
