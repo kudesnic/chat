@@ -19,6 +19,16 @@ class ChatRepository extends ServiceEntityRepository
         parent::__construct($registry, Chat::class);
     }
 
+    /**
+     * Finds chat by uuid
+     * @param string $uuid
+     * @return Chat|null
+     */
+    public function findChatByUuid(string $uuid):? Chat
+    {
+        return $this->findOneBy(['uuid' => $uuid]);
+    }
+
     // /**
     //  * @return Chat[] Returns an array of Chat objects
     //  */

@@ -2,13 +2,12 @@
 
 namespace App\Entity;
 
+use App\Validator\CustomUuidValidator;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use PHPUnit\Framework\Constraint\ExceptionMessage;
-use Ramsey\Uuid\Doctrine\UuidGenerator;
 use Ramsey\Uuid\Uuid;
-use Ramsey\Uuid\UuidInterface;
+use Ramsey\Uuid\UuidFactory;
 
 
 /**
@@ -22,18 +21,9 @@ class Chat
         self::STRATEGY_INTERNAL_CHAT,
         self::STRATEGY_EXTERNAL_CHAT
     ];
-    /**
-     * The internal primary identity key.
-     *
-     * @var UuidInterface
-     *
-     * @ORM\Column(type="uuid")
-     */
-    protected $uuid;
+
 
     /**
-     * IMPORTANT! This field annotation must be after uuid in list of properties, to prevent
-     * Doctrine will use UuidGenerator as $`class->idGenerator`!
      * @ORM\Id()
      * @ORM\GeneratedValue(strategy="SEQUENCE")
      * @ORM\SequenceGenerator(sequenceName="chat_seq", initialValue=1)
@@ -41,6 +31,12 @@ class Chat
      */
     private $id;
 
+    /**
+     * The internal primary identity key.
+     *
+     * @ORM\Column(type="uuid")
+     */
+    protected $uuid;
     /**
      * @ORM\Column(type="integer")
      */
@@ -66,7 +62,12 @@ class Chat
     public function __construct()
     {
         $this->message = new ArrayCollection();
-        $this->uuid = Uuid::uuid4();
+        //wamp protocol cant use strings with dashes as a topic name, but postgres uuid column type accepts uuids without dashes
+        $factory = new UuidFactory();
+        $factory->setValidator(new CustomUuidValidator());
+
+        Uuid::setFactory($factory);
+        $this->uuid = str_replace('-', '', Uuid::uuid4());
     }
 
     public function getId(): ?int
@@ -74,9 +75,14 @@ class Chat
         return $this->id;
     }
 
+    /**
+     * you can send uuid without dashes to postgres, but it will save it with dashes. It is ok and such cases described in postgres docs
+     * @link https://www.postgresql.org/docs/9.1/datatype-uuid.html
+     * @return string
+     */
     public function getUuid(): string
     {
-        return $this->uuid;
+        return  str_replace('-', '', $this->uuid);
     }
 
     public function getUserId(): ?int

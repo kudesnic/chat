@@ -7,6 +7,7 @@ use App\Entity\Message;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Security\Authentication\Token\JWTUserToken;
+use Ramsey\Uuid\Uuid;
 use React\EventLoop\Factory;
 use React\EventLoop\LoopInterface;
 use React\ZMQ\Context;
@@ -17,6 +18,7 @@ use Thruway\Module\RouterModuleInterface;
 use Thruway\Peer\Client;
 use Thruway\Peer\RouterInterface;
 use Thruway\Transport\TransportInterface;
+use Thruway\WampErrorException;
 
 class InternalClient extends Client
 {
@@ -53,50 +55,38 @@ class InternalClient extends Client
         $pull    = $context->getSocket(\ZMQ::SOCKET_PULL);
         $pull->bind('tcp://127.0.0.1:5555');
 
-        $this->on('publish', [$this, 'message']);
+//        $this->on('publish', [$this, 'incomeMessage']);
         //$this->on('message', [$this, 'message']);
-        $session->register('createChat', [$this, 'createChat']);
+        $session->register('getUserTopic', [$this, 'getUserTopic']);
+        $session->register('createActiveChat', [$this, 'createActiveChat']);
 
     }
 
     /**
-     * Handle get PHP version
-     *
      * @param $args
      * @return array
+     * @throws WampErrorException
      */
-    public function createChat($args):array
+    public function createActiveChat($args, $kwargs):array
     {
-        $data = $args[0];
-        if(isset($data->userToken)){
+        if(isset($kwargs->userToken)){
             //1st app message with connected user
+            $user = $this->getAuthenticatedUser($kwargs->userToken);
 
-            //a user auth, else, app sending message auth
-            echo "Check user credentials\n";
-            //get credentials
-            $jwt_encoder = $this->container->get('lexik_jwt_authentication.encoder');
-            try{
-                $payload = $jwt_encoder->decode($data->userToken);
-            } catch (\Exception $e){
-                $this->getSession()->close($e->getMessage());
-                return ['error' => $e->getMessage()];
-            }
-            //getUser by email
-            if(!$user = $this->getUserByEmail($payload['email'])){
-                $this->getSession()->close();
-                return ['error' => 'Can\'t find a user for this token'];
-            }
             $chat = new Chat();
             $chat->setUser($user);
             $chat->setStrategy(Chat::STRATEGY_INTERNAL_CHAT);
             $this->em->persist($chat);
             $this->em->flush($chat);
-            $this->getSession()->subscribe($chat->getUuid(), [$this, 'allEvents']);
+            $this->getSession()->subscribe($chat->getUuid(), [$this, 'incomeMessage']);
             $this->chatUiidToIdMapping[$chat->getUuid()] = $chat->getId(); // TODO: Remove mapping element in onCLose and onUnsubscribe events
 //            $this->getCaller()->call($this->getSession(), 'connectToNewChat', ['chat_uiid' => $chat->getUuid()]);
             //if user online
-            if(isset($this->userIdToUserTopicId[$data->callee_id])){
-                $this->getSession()->publish($this->userIdToUserTopicId[$data->callee_id], ['type' => 'income_chat', 'chat_uuid' => $chat->getUuid()], ['exclude_me' => true]);
+            if(isset($this->userIdToUserTopicId[$kwargs->callee_id])){
+                $this->getSession()->publish($this->userIdToUserTopicId[$kwargs->callee_id],
+                    ['type' => 'income_chat', 'chat_uuid' => $chat->getUuid()],
+                    ['exclude_me' => true]
+                );
             }
 
         } else {
@@ -115,16 +105,15 @@ class InternalClient extends Client
      * @return array
      * @throws \Exception
      */
-    public function getUserTopic($args):array
+    public function getUserTopic($args, $kwargs):array
     {
-        $data = $args[0];
-        if(isset($data->userToken)){
+        if(isset($kwargs->userToken)){
             //1st app message with connected user
 
-            $user = $this->getAuthenticatedUser($data->userToken);
+            $user = $this->getAuthenticatedUser($kwargs->userToken);
 
-            $userTopicId = uniqid(random_bytes(4), true);
-            $this->userIdTouserTopicId[$user->getId()] = $userTopicId;
+            $userTopicId = uniqid($user->getId());
+            $this->userIdToUserTopicId[$user->getId()] = $userTopicId;
             $this->getSession()->subscribe($userTopicId, [$this, 'allEvents']);
 
         } else {
@@ -135,20 +124,27 @@ class InternalClient extends Client
         return ['user_topic_id' => $userTopicId];
     }
 
-    private function getAuthenticatedUser(string $token):? User
+    /**
+     * @param string $token
+     * @return User
+     * @throws WampErrorException
+     */
+    private function getAuthenticatedUser(string $token): User
     {
-        //a user auth, else, app sending message auth
         echo "Check user credentials\n";
         //get credentials
-        $jwt_manager = $this->container->get('lexik_jwt_authentication.jwt_manager');
-        $token = new JWTUserToken();
-        $token->setRawToken($token);
-        $payload = $jwt_manager->decode($token);
+        $jwt_encoder = $this->container->get('lexik_jwt_authentication.encoder');
+        try{
+            $payload = $jwt_encoder->decode($token);
+        } catch (\Exception $e){
+            $this->getSession()->close($e->getMessage());
+            throw new WampErrorException('user.authentication.error', [$e->getMessage()]);
+        }
 
-        //getUser by email
-        if(!$user = $this->getUserByEmail($payload['email'])){
-            $this->getCaller()->call($this->getSession(), 'authError', ['message' => 'User token is incorrect']);
+        $user = $this->getUserByEmail($payload['email']);
+        if(!$user){
             $this->getSession()->close();
+            throw new WampErrorException('user.authentication.error', ['Can\'t find a user for this token']);
         }
 
         return $user;
@@ -159,10 +155,15 @@ class InternalClient extends Client
      *
      * @return array
      */
-    public function message($args, $argsKw=[], $details=[], $publicationId=null)
+    public function incomeMessage($args, $kwargs = [], $details = [], $publicationId=null)
     {
-        Logger::debug($this, '--------------------------message event');
-        $this->getSession()->publish('chat1', ['exclude_me' => true]);
+        $chatRepo = $this->em->getRepository(Chat::class);
+        $message = new Message();
+        $message->setChat($chatRepo->findChatByUuid($kwargs->activeChatUuid)->getId());
+        $message->setUser($this->getAuthenticatedUser($kwargs->userToken));
+        $message->setText($kwargs->message);
+        Logger::debug($this, '--------------------------Income message to active chat');
+//       $this->validateMessage(); message must have sender, receiver, active chat
 
         return 'message';
     }
@@ -173,7 +174,7 @@ class InternalClient extends Client
      *
      * @return array
      */
-    public function allEvents($args, $argsKw, $details, $publicationId)
+    public function allEvents($args, $kwargs, $details, $publicationId)
     {
         $value = isset($args[0]) ? $args[0] : '';
         echo '---------------  Received ' . json_encode($value) . ' on topic ' . PHP_EOL;
