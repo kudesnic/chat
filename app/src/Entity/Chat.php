@@ -67,7 +67,9 @@ class Chat
         $factory->setValidator(new CustomUuidValidator());
 
         Uuid::setFactory($factory);
-        $this->uuid = str_replace('-', '', Uuid::uuid4());
+        $uuid4 = Uuid::uuid4();
+        echo '--------------------uuid = ' . $uuid4;
+        $this->uuid = str_replace('-', '', $uuid4);
     }
 
     public function getId(): ?int

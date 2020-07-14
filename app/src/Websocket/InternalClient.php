@@ -25,27 +25,29 @@ class InternalClient extends Client
     protected $container;
     protected $em;
     protected $connections;
-    /**
-     * Topics internal client subscribed for
-     * @var \SplObjectStorage
-     */
     private $activeTopics = []; // topic equal to chat
     private $chatUiidToIdMapping = [];
     private $userIdToUserTopicId = [];
 
+    /**
+     * InternalClient constructor.
+     * @param ContainerInterface $container
+     * @param EntityManagerInterface $em
+     * @param $realm
+     * @param $loop
+     */
     public function __construct(ContainerInterface $container, EntityManagerInterface $em, $realm, $loop)
     {
         $this->container = $container;
         $this->em = $em;
-        $this->activeTopics = new \SplObjectStorage();
-
 
         parent::__construct($realm, $loop);
     }
 
     /**
      * @param \Thruway\ClientSession $session
-     * @param \Thruway\Transport\TransportInterface $transport
+     * @param TransportInterface $transport
+     * @throws \ZMQSocketException
      */
     public function onSessionStart($session, $transport)
     {
@@ -80,13 +82,16 @@ class InternalClient extends Client
             $this->em->flush($chat);
             $this->getSession()->subscribe($chat->getUuid(), [$this, 'incomeMessage']);
             $this->chatUiidToIdMapping[$chat->getUuid()] = $chat->getId(); // TODO: Remove mapping element in onCLose and onUnsubscribe events
-//            $this->getCaller()->call($this->getSession(), 'connectToNewChat', ['chat_uiid' => $chat->getUuid()]);
+            $this->activeTopics[] = $chat->getUuid();
             //if user online
-            if(isset($this->userIdToUserTopicId[$kwargs->callee_id])){
-                $this->getSession()->publish($this->userIdToUserTopicId[$kwargs->callee_id],
-                    ['type' => 'income_chat', 'chat_uuid' => $chat->getUuid()],
-                    ['exclude_me' => true]
-                );
+            if(isset($this->userIdToUserTopicId[$kwargs->calleeId])){
+                $this->getSession()->call('connectToNewChat', [], ['chatUuid' => $chat->getUuid()], ['exclude_me' => true]);
+//                $this->getSession()->publish($this->userIdToUserTopicId[$kwargs->calleeId],
+//                    ['type' => 'income_chat', 'chat_uuid' => $chat->getUuid()],
+//                    ['exclude_me' => true]
+//                );
+            } else {
+                Logger::info($this, '-------------Chat to offline user');
             }
 
         } else {
@@ -94,7 +99,7 @@ class InternalClient extends Client
             Logger::info($this, '-------------External clients tries to create a chat');///TODO: add support for external client
         }
 
-        return ['chat_uuid' => $chat->getUuid()];
+        return ['chatUuid' => $chat->getUuid()];
     }
 
     /**
@@ -157,15 +162,20 @@ class InternalClient extends Client
      */
     public function incomeMessage($args, $kwargs = [], $details = [], $publicationId=null)
     {
+       $this->validateMessage($kwargs);
         $chatRepo = $this->em->getRepository(Chat::class);
+        $messageRepo = $this->em->getRepository(Message::class);
+        $activeChat = $chatRepo->findChatByUuid($kwargs->openedChatId);
+        $sender = $this->getAuthenticatedUser($kwargs->userToken);
         $message = new Message();
-        $message->setChat($chatRepo->findChatByUuid($kwargs->activeChatUuid)->getId());
-        $message->setUser($this->getAuthenticatedUser($kwargs->userToken));
+        $message->setChat($activeChat);
+        $message->setUser($sender);
         $message->setText($kwargs->message);
-        Logger::debug($this, '--------------------------Income message to active chat');
-//       $this->validateMessage(); message must have sender, receiver, active chat
+        $message->setOrdering($messageRepo->getMaxOrderForChat($activeChat) + 1);
+        $this->em->persist($message);
+        $this->em->flush($message);
 
-        return 'message';
+        return ['messageId' => $message->getId(), 'message' => $kwargs->message, 'sender' => $sender];
     }
 
 
@@ -189,7 +199,7 @@ class InternalClient extends Client
      * @return false|User
      * @throws Exception
      */
-    protected function getUserByEmail($email)
+    private function getUserByEmail($email)
     {
         if(!filter_var($email, FILTER_VALIDATE_EMAIL)){
             return false;
@@ -205,6 +215,22 @@ class InternalClient extends Client
             return false;
         }
 
+    }
+
+    /**
+     * Checks whether $kwargs object has required properties or does not
+     *
+     * @param object $kwargs
+     * @param array $requiredProperties
+     * @throws WampErrorException
+     */
+    private function validateMessage(object $kwargs, $requiredProperties = ['openedChatId', 'userToken', 'message'])
+    {
+        foreach ($requiredProperties as $property){
+            if(!property_exists($kwargs, $property)){
+                throw new WampErrorException('message.invalid_arguments', [$property . ' is required']);
+            }
+        }
     }
 
 }

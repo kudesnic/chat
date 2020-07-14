@@ -53,7 +53,7 @@ class Message
     /**
      * @ORM\Column(type="integer")
      */
-    private $order;
+    private $ordering;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Chat", inversedBy="message")
@@ -152,14 +152,14 @@ class Message
         return $this;
     }
 
-    public function getOrder(): ?self
+    public function getOrder(): ?int
     {
-        return $this->parent;
+        return $this->ordering;
     }
 
-    public function setOrder(?self $order): self
+    public function setOrdering(?int $ordering): self
     {
-        $this->order = $order;
+        $this->ordering = $ordering;
 
         return $this;
     }

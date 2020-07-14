@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\Entity\Chat;
 use App\Entity\Message;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -17,6 +18,23 @@ class MessageRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Message::class);
+    }
+
+    /**
+     * Gets max order for considerable chat entity
+     * @param Chat $chat
+     * @return int
+     * @throws \Doctrine\ORM\NoResultException
+     * @throws \Doctrine\ORM\NonUniqueResultException
+     */
+    public function getMaxOrderForChat(Chat $chat):int
+    {
+        return (int) $this->createQueryBuilder('message')
+            ->select('MAX(message.ordering)')
+            ->andWhere('message.chat_id = :chat_id')
+            ->setParameter('chat_id', $chat->getId())
+            ->getQuery()
+            ->getSingleScalarResult();
     }
 
     // /**
