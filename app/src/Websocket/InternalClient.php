@@ -12,6 +12,7 @@ use React\EventLoop\Factory;
 use React\EventLoop\LoopInterface;
 use React\ZMQ\Context;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Thruway\ClientSession;
 use Thruway\Logging\Logger;
 use Thruway\Message\PublishMessage;
 use Thruway\Module\RouterModuleInterface;
@@ -61,6 +62,7 @@ class InternalClient extends Client
         //$this->on('message', [$this, 'message']);
         $session->register('getUserTopic', [$this, 'getUserTopic']);
         $session->register('createActiveChat', [$this, 'createActiveChat']);
+        $session->register('getMainUserTopicInfo', [$this, 'getMainUserTopicInfo']);
 
     }
 
@@ -130,6 +132,53 @@ class InternalClient extends Client
     }
 
     /**
+     * Handle get PHP version
+     *
+     * @return array
+     */
+    public function incomeMessage($args, $kwargs = [])
+    {
+        $this->validateMessage($kwargs);
+        $chatRepo = $this->em->getRepository(Chat::class);
+        $messageRepo = $this->em->getRepository(Message::class);
+        $activeChat = $chatRepo->findChatByUuid($kwargs->openedChatId);
+        $sender = $this->getAuthenticatedUser($kwargs->userToken);
+        $message = new Message();
+        $message->setChat($activeChat);
+        $message->setUser($sender);
+        $message->setText($kwargs->message);
+        $message->setOrdering($messageRepo->getMaxOrderForChat($activeChat) + 1);
+        $this->em->persist($message);
+        $this->em->flush($message);
+
+        return ['messageId' => $message->getId(), 'message' => $kwargs->message, 'sender' => $sender];
+    }
+
+    public function getMainUserTopicInfo($args, $kwargs = [], $details = [])
+    {
+        $user = $this->getAuthenticatedUser($kwargs->userToken);
+        $chatRepo = $this->em->getRepository(Chat::class);
+        $chats = $chatRepo->getNewAndUpdatedChats($user);
+
+        //find user chats requests through many to many table
+        ////find new messages
+    }
+
+
+    /**
+     * Handle get PHP version
+     *
+     * @return array
+     */
+    public function allEvents($args, $kwargs, $details, $publicationId)
+    {
+        $value = isset($args[0]) ? $args[0] : '';
+        echo '---------------  Received ' . json_encode($value) . ' on topic ' . PHP_EOL;
+        Logger::debug($this, '--------------------------all events' );
+        return 'aaaalll';
+    }
+
+    /**
      * @param string $token
      * @return User
      * @throws WampErrorException
@@ -154,44 +203,6 @@ class InternalClient extends Client
 
         return $user;
     }
-
-    /**
-     * Handle get PHP version
-     *
-     * @return array
-     */
-    public function incomeMessage($args, $kwargs = [], $details = [], $publicationId=null)
-    {
-       $this->validateMessage($kwargs);
-        $chatRepo = $this->em->getRepository(Chat::class);
-        $messageRepo = $this->em->getRepository(Message::class);
-        $activeChat = $chatRepo->findChatByUuid($kwargs->openedChatId);
-        $sender = $this->getAuthenticatedUser($kwargs->userToken);
-        $message = new Message();
-        $message->setChat($activeChat);
-        $message->setUser($sender);
-        $message->setText($kwargs->message);
-        $message->setOrdering($messageRepo->getMaxOrderForChat($activeChat) + 1);
-        $this->em->persist($message);
-        $this->em->flush($message);
-
-        return ['messageId' => $message->getId(), 'message' => $kwargs->message, 'sender' => $sender];
-    }
-
-
-    /**
-     * Handle get PHP version
-     *
-     * @return array
-     */
-    public function allEvents($args, $kwargs, $details, $publicationId)
-    {
-        $value = isset($args[0]) ? $args[0] : '';
-        echo '---------------  Received ' . json_encode($value) . ' on topic ' . PHP_EOL;
-        Logger::debug($this, '--------------------------all events' );
-        return 'aaaalll';
-    }
-
     /**
      * Get user from email credential
      *

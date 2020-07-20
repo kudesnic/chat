@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Chat;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -27,6 +28,27 @@ class ChatRepository extends ServiceEntityRepository
     public function findChatByUuid(string $uuid):? Chat
     {
         return $this->findOneBy(['uuid' => $uuid]);
+    }
+
+    /**
+     * @param User $user
+     * @return mixed
+     */
+    public function getNewAndUpdatedChats(User $user):array
+    {
+        $entityManager = $this->getEntityManager();
+
+        $query = $entityManager->createQuery(
+            'SELECT c, m
+            FROM chat c
+            LEFT JOIN message m ON c.id = m.chat_id
+            WHERE c.unread_messages > 0 AND (WHERE owner_id = :owner_id OR WHERE user_id = :user_id)
+            ORDER BY updated_at ASC')
+            ->setParameter('owner_id', $user->getId())
+            ->setParameter('user_id', $user->getId())
+            ->getQuery()
+            ->getResult();
+
     }
 
     // /**
