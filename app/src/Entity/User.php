@@ -155,7 +155,7 @@ class User implements UserInterface
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\Chat", mappedBy="user")
      */
-    private $chats;
+    private $own_chats;
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\Message", mappedBy="user")
@@ -302,7 +302,7 @@ class User implements UserInterface
         return $this->lvl;
     }
 
-    public function getRoot()
+    public function getRoot(): self
     {
         return $this->root;
     }
@@ -312,12 +312,12 @@ class User implements UserInterface
         $this->parent = $parent;
     }
 
-    public function getParent()
+    public function getParent(): self
     {
         return $this->parent;
     }
 
-    public function getParentId()
+    public function getParentId(): int
     {
         return $this->parent_id;
     }
@@ -334,12 +334,12 @@ class User implements UserInterface
         return $this;
     }
 
-    public function getCreated()
+    public function getCreated(): int
     {
         return $this->created;
     }
 
-    public function getUpdated()
+    public function getUpdated(): int
     {
         return $this->updated;
     }
@@ -378,25 +378,25 @@ class User implements UserInterface
     /**
      * @return Collection|Chat[]
      */
-    public function getChats(): Collection
+    public function getOwnChats(): Collection
     {
-        return $this->chats;
+        return $this->own_chats;
     }
 
-    public function addChat(Chat $chat): self
+    public function addOwnChat(Chat $chat): self
     {
-        if (!$this->chats->contains($chat)) {
-            $this->chats[] = $chat;
+        if (!$this->own_chats->contains($chat)) {
+            $this->own_chats[] = $chat;
             $chat->setUser($this);
         }
 
         return $this;
     }
 
-    public function removeChat(Chat $chat): self
+    public function removeOwnChat(Chat $chat): self
     {
-        if ($this->chats->contains($chat)) {
-            $this->chats->removeElement($chat);
+        if ($this->own_chats->contains($chat)) {
+            $this->own_chats->removeElement($chat);
             // set the owning side to null (unless already changed)
             if ($chat->getUser() === $this) {
                 $chat->setUser(null);

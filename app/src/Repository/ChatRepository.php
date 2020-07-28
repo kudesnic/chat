@@ -31,25 +31,65 @@ class ChatRepository extends ServiceEntityRepository
     }
 
     /**
+     * Extracts new chats and existing chats with new messages
+     *
      * @param User $user
-     * @return mixed
+     * @param bool $onlyUpdatedChats
+     * @param int $page
+     * @param int $perPage
+     * @return array
      */
-    public function getNewAndUpdatedChats(User $user):array
+    public function getNewAndUpdatedChats(User $user, bool $onlyUpdatedChats = true, int $page = 1, int $perPage = 20):array
     {
-        $entityManager = $this->getEntityManager();
+        $offset = ($page - 1) * $perPage;
+        if($onlyUpdatedChats){
+            $messageCountComparison = '>';
+        } else {
+            $messageCountComparison = '=';
+        }
 
-        $query = $entityManager->createQuery(
-            'SELECT c, m
-            FROM chat c
-            LEFT JOIN message m ON c.id = m.chat_id
-            WHERE c.unread_messages > 0 AND (WHERE owner_id = :owner_id OR WHERE user_id = :user_id)
-            ORDER BY updated_at ASC')
+        return $this->createQueryBuilder('c')
+            ->andWhere('c.unread_messages_count ' . $messageCountComparison . ' 0 AND (c.owner_id = :owner_id OR c.user_id = :user_id)')
+            ->leftJoin('c.user', 'u')
+            ->leftJoin('c.owner', 'o')
             ->setParameter('owner_id', $user->getId())
             ->setParameter('user_id', $user->getId())
+            ->addSelect('c')
+            ->addSelect('u')
+            ->addSelect('o')
+            ->setFirstResult($offset)
+            ->setMaxResults($perPage)
             ->getQuery()
             ->getResult();
-
     }
+//
+//    /**
+//     * Extracts new chats and existing chats with new messages
+//     *
+//     * @param User $user
+//     * @param int $page
+//     * @return array
+//     */
+//    public function getNewAndUpdatedChats(User $user, int $page = 0):array
+//    {
+//        $perPage = 20;
+//        $entityManager = $this->getEntityManager();
+//        $offset = $page * $perPage;
+//
+//        return $entityManager->createQuery(
+//            'SELECT c FROM App\Entity\Chat c
+//            WHERE c.unread_messages_count > 0 AND (c.owner_id = :owner_id OR c.user_id = :user_id)
+//            ORDER BY c.updated DESC')
+//            ->leftJoin('p.user', 'u')
+//            ->leftJoin('p.owner', 'o')
+//            ->setParameter('owner_id', $user->getId())
+//            ->setParameter('user_id', $user->getId())
+//            ->addSelect('u')
+//            ->addSelect('o')
+//            ->setFirstResult($offset)
+//            ->setMaxResults($perPage)
+//            ->getResult();
+//    }
 
     // /**
     //  * @return Chat[] Returns an array of Chat objects

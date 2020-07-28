@@ -5,6 +5,7 @@ namespace App\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Gedmo\Mapping\Annotation as Gedmo;
 
 
 /**
@@ -51,6 +52,22 @@ class Message
     private $user_id;
 
     /**
+     * @var \DateTime $created
+     *
+     * @Gedmo\Timestampable(on="create")
+     * @ORM\Column(type="datetime")
+     */
+    private $created;
+
+    /**
+     * @var \DateTime $updated
+     *
+     * @Gedmo\Timestampable(on="update")
+     * @ORM\Column(type="datetime")
+     */
+    private $updated;
+
+    /**
      * @ORM\Column(type="integer")
      */
     private $ordering;
@@ -77,6 +94,11 @@ class Message
      * @ORM\JoinColumn(nullable=false, onDelete="CASCADE")
      */
     private $user;
+
+    /**
+     * @ORM\Column(type="boolean")
+     */
+    private $is_read;
 
     public function __construct()
     {
@@ -203,6 +225,35 @@ class Message
     public function setUser(?User $user): self
     {
         $this->user = $user;
+
+        return $this;
+    }
+
+    public function setUnreadMessagesCount(?int $unread_messages_count): self
+    {
+        $this->unread_messages_count = $unread_messages_count;
+
+        return $this;
+    }
+
+    public function getCreated(): int
+    {
+        return $this->created;
+    }
+
+    public function getUpdated(): int
+    {
+        return $this->updated;
+    }
+
+    public function getIsRead(): bool
+    {
+        return $this->is_read;
+    }
+
+    public function setIsRead(bool $is_read): self
+    {
+        $this->is_read = $is_read;
 
         return $this;
     }

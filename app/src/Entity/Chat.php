@@ -5,9 +5,10 @@ namespace App\Entity;
 use App\Validator\CustomUuidValidator;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use Doctrine\ORM\Mapping as ORM;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidFactory;
+use Doctrine\ORM\Mapping as ORM;
+use Gedmo\Mapping\Annotation as Gedmo;
 
 
 /**
@@ -37,8 +38,14 @@ class Chat
      * @ORM\Column(type="uuid")
      */
     protected $uuid;
+
     /**
      * @ORM\Column(type="integer")
+     */
+    private $owner_id;
+
+    /**
+     * @ORM\Column(type="integer", nullable=true)
      */
     private $user_id;
 
@@ -56,8 +63,34 @@ class Chat
      * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="chats")
      * @ORM\JoinColumn(nullable=false, onDelete="CASCADE")
      */
+    private $owner;
+
+    /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="own_chats")
+     * @ORM\JoinColumn(nullable=false, onDelete="CASCADE")
+     */
     private $user;
 
+    /**
+     * @ORM\Column(type="smallint", nullable=true)
+     */
+    private $unread_messages_count;
+
+    /**
+     * @var \DateTime $created
+     *
+     * @Gedmo\Timestampable(on="create")
+     * @ORM\Column(type="datetime")
+     */
+    private $created;
+
+    /**
+     * @var \DateTime $updated
+     *
+     * @Gedmo\Timestampable(on="update")
+     * @ORM\Column(type="datetime")
+     */
+    private $updated;
 
     public function __construct()
     {
@@ -85,6 +118,18 @@ class Chat
     public function getUuid(): string
     {
         return  str_replace('-', '', $this->uuid);
+    }
+
+    public function getOwnerId(): ?int
+    {
+        return $this->owner_id;
+    }
+
+    public function setOwnerId(int $owner_id): self
+    {
+        $this->owner_id = $owner_id;
+
+        return $this;
     }
 
     public function getUserId(): ?int
@@ -145,6 +190,18 @@ class Chat
         return $this;
     }
 
+    public function getOwner(): ?User
+    {
+        return $this->owner;
+    }
+
+    public function setOwner(User $user): self
+    {
+        $this->owner = $user;
+
+        return $this;
+    }
+
     public function getUser(): ?User
     {
         return $this->user;
@@ -155,5 +212,27 @@ class Chat
         $this->user = $user;
 
         return $this;
+    }
+
+    public function getUnreadMessagesCount(): ?int
+    {
+        return $this->unread_messages_count;
+    }
+
+    public function setUnreadMessagesCount(?int $unread_messages_count): self
+    {
+        $this->unread_messages_count = $unread_messages_count;
+
+        return $this;
+    }
+
+    public function getCreated(): int
+    {
+        return $this->created;
+    }
+
+    public function getUpdated(): int
+    {
+        return $this->updated;
     }
 }

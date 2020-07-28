@@ -63,10 +63,22 @@ class InternalClient extends Client
         $session->register('getUserTopic', [$this, 'getUserTopic']);
         $session->register('createActiveChat', [$this, 'createActiveChat']);
         $session->register('getMainUserTopicInfo', [$this, 'getMainUserTopicInfo']);
+        $session->register('getNewAndUpdatedChats', [$this, 'getNewAndUpdatedChats']);
+        $session->subscribe('wamp.metaevent.session.on_leave', [$this, 'onSessionLeave']);
 
     }
 
     /**
+     * @param $args
+     * @return array
+     * @throws WampErrorException
+     */
+    public function onSessionLeave($args, $kwargs):array
+    {
+        Logger::debug($this, '-------------On leave event' . implode(',' , $kwargs));
+
+
+    }/**
      * @param $args
      * @return array
      * @throws WampErrorException
@@ -147,6 +159,15 @@ class InternalClient extends Client
         $message->setChat($activeChat);
         $message->setUser($sender);
         $message->setText($kwargs->message);
+        $chatUsers = [$activeChat->getUserId(), $activeChat->getOwnerId()];
+        $chatUsers = array_flip($chatUsers);
+        unset($chatUsers[$sender->getId()]);
+        reset($chatUsers); //now chatUsers contain only one element with calleeId
+        if(isset($this->userIdToUserTopicId[$chatUsers])) {
+            $message->setIsRead(true);
+        } else {
+            $message->setIsRead(false);
+        }
         $message->setOrdering($messageRepo->getMaxOrderForChat($activeChat) + 1);
         $this->em->persist($message);
         $this->em->flush($message);
@@ -154,14 +175,54 @@ class InternalClient extends Client
         return ['messageId' => $message->getId(), 'message' => $kwargs->message, 'sender' => $sender];
     }
 
+    /**
+     * @param $args
+     * @param array $kwargs
+     * @param array $details
+     * @return array
+     * @throws WampErrorException
+     */
     public function getMainUserTopicInfo($args, $kwargs = [], $details = [])
+    {
+        return [];
+    }
+
+    /**
+     * @param $args
+     * @param array $kwargs
+     * @param array $details
+     * @return mixed
+     * @throws WampErrorException
+     */
+    public function getNewAndUpdatedChats($args, $kwargs = [], $details = [])
+    {
+        try {
+            $user = $this->getAuthenticatedUser($kwargs->userToken);
+            $chatRepo = $this->em->getRepository(Chat::class);
+            $page = (isset($kwargs->page)) ? $kwargs->page : 1;
+            $chats = $chatRepo->getNewAndUpdatedChats($user, true, $page);
+        } catch (\Exception $e){
+            var_dump($e->getTraceAsString());exit;
+            Logger::error($this, $e->getMessage(), $e->getTrace());
+
+        }
+        return $chats;
+    }
+
+    /**
+     * @param $args
+     * @param array $kwargs
+     * @param array $details
+     * @return mixed
+     * @throws WampErrorException
+     */
+    public function getChats($args, $kwargs = [], $details = [])
     {
         $user = $this->getAuthenticatedUser($kwargs->userToken);
         $chatRepo = $this->em->getRepository(Chat::class);
         $chats = $chatRepo->getNewAndUpdatedChats($user);
 
-        //find user chats requests through many to many table
-        ////find new messages
+        return $chats;
     }
 
 
