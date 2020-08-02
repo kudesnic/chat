@@ -96,8 +96,9 @@ class Chat
     private $updated;
 
     /**
-     * @ORM\ManyToOne(targetEntity=User::class, inversedBy="last_active_chats")
+     * This field added to chat entity for better performance
      *
+     * @ORM\ManyToOne(targetEntity=User::class, inversedBy="last_active_chats")
      */
     private $last_active_user;
 
