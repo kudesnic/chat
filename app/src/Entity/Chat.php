@@ -55,9 +55,9 @@ class Chat
     private $strategy;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\Message", mappedBy="chat")
+     * @ORM\OneToMany(targetEntity="App\Entity\Message", mappedBy="chat", fetch="EXTRA_LAZY")
      */
-    private $message;
+    private $messages;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="chats")
@@ -72,6 +72,9 @@ class Chat
     private $user;
 
     /**
+     * Property increments automatically. Check MessageEntityListener for details.
+     * This field added to chat entity for better performance
+     *
      * @ORM\Column(type="smallint", nullable=true)
      */
     private $unread_messages_count;
@@ -92,9 +95,15 @@ class Chat
      */
     private $updated;
 
+    /**
+     * @ORM\ManyToOne(targetEntity=User::class, inversedBy="last_active_chats")
+     *
+     */
+    private $last_active_user;
+
     public function __construct()
     {
-        $this->message = new ArrayCollection();
+        $this->messages = new ArrayCollection();
         //wamp protocol cant use strings with dashes as a topic name, but postgres uuid column type accepts uuids without dashes
         $factory = new UuidFactory();
         $factory->setValidator(new CustomUuidValidator());
@@ -162,15 +171,15 @@ class Chat
     /**
      * @return Collection|Message[]
      */
-    public function getMessage(): Collection
+    public function getMessages(): Collection
     {
-        return $this->message;
+        return $this->messages;
     }
 
     public function addMessage(Message $message): self
     {
-        if (!$this->message->contains($message)) {
-            $this->message[] = $message;
+        if (!$this->messages->contains($message)) {
+            $this->messages[] = $message;
             $message->setChat($this);
         }
 
@@ -179,8 +188,8 @@ class Chat
 
     public function removeMessage(Message $message): self
     {
-        if ($this->message->contains($message)) {
-            $this->message->removeElement($message);
+        if ($this->messages->contains($message)) {
+            $this->messages->removeElement($message);
             // set the owning side to null (unless already changed)
             if ($message->getChat() === $this) {
                 $message->setChat(null);
@@ -234,5 +243,17 @@ class Chat
     public function getUpdated(): int
     {
         return $this->updated;
+    }
+
+    public function getLastActiveUser(): ?User
+    {
+        return $this->last_active_user;
+    }
+
+    public function setLastActiveUser(?User $last_active_user): self
+    {
+        $this->last_active_user = $last_active_user;
+
+        return $this;
     }
 }

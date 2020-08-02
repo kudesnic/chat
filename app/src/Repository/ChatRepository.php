@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\Chat;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\Query\Expr\Join;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -43,24 +44,25 @@ class ChatRepository extends ServiceEntityRepository
     {
         $offset = ($page - 1) * $perPage;
         if($onlyUpdatedChats){
-            $messageCountComparison = '>';
+            $messageCountCondition = 'c.unread_messages_count > 0 AND ';
         } else {
-            $messageCountComparison = '=';
+            $messageCountCondition = '';
         }
 
-        return $this->createQueryBuilder('c')
-            ->andWhere('c.unread_messages_count ' . $messageCountComparison . ' 0 AND (c.owner_id = :owner_id OR c.user_id = :user_id)')
-            ->leftJoin('c.user', 'u')
-            ->leftJoin('c.owner', 'o')
+        $result = $this->createQueryBuilder('c')
+            ->leftJoin('c.last_active_user', 'lau')
+            ->leftJoin('c.messages', 'm', Join::WITH, 'c.id = m.chat_id AND m.ordering = ( SELECT MAX(msg.ordering) FROM App\Entity\Message msg WHERE msg.chat_id = c.id )')
+            ->addSelect('lau')
+            ->addSelect('m')
+            ->andWhere($messageCountCondition .' (c.owner_id = :owner_id OR c.user_id = :user_id) AND (lau.id <> :user_id)')
             ->setParameter('owner_id', $user->getId())
             ->setParameter('user_id', $user->getId())
-            ->addSelect('c')
-            ->addSelect('u')
-            ->addSelect('o')
             ->setFirstResult($offset)
             ->setMaxResults($perPage)
             ->getQuery()
-            ->getResult();
+            ->getArrayResult();
+
+        return $result;
     }
 //
 //    /**

@@ -87,9 +87,16 @@ class InternalClient extends Client
     {
         if(isset($kwargs->userToken)){
             //1st app message with connected user
-            $user = $this->getAuthenticatedUser($kwargs->userToken);
+            $owner = $this->getAuthenticatedUser($kwargs->userToken);
+            $userRepo = $this->em->getRepository(User::class);
+            $user = $userRepo->find($kwargs->calleeId);
+
+            if($user->getTreeRoot() != $owner->getTreeRoot()){
+                throw new WampErrorException('chat.validation.error', ['Callee is not in the same users tree']);
+            }
 
             $chat = new Chat();
+            $chat->setOwner($owner);
             $chat->setUser($user);
             $chat->setStrategy(Chat::STRATEGY_INTERNAL_CHAT);
             $this->em->persist($chat);
@@ -150,20 +157,23 @@ class InternalClient extends Client
      */
     public function incomeMessage($args, $kwargs = [])
     {
+        Logger::info($this, '-------------Income message processing');
+
         $this->validateMessage($kwargs);
         $chatRepo = $this->em->getRepository(Chat::class);
         $messageRepo = $this->em->getRepository(Message::class);
         $activeChat = $chatRepo->findChatByUuid($kwargs->openedChatId);
+
         $sender = $this->getAuthenticatedUser($kwargs->userToken);
         $message = new Message();
         $message->setChat($activeChat);
         $message->setUser($sender);
         $message->setText($kwargs->message);
-        $chatUsers = [$activeChat->getUserId(), $activeChat->getOwnerId()];
-        $chatUsers = array_flip($chatUsers);
-        unset($chatUsers[$sender->getId()]);
-        reset($chatUsers); //now chatUsers contain only one element with calleeId
-        if(isset($this->userIdToUserTopicId[$chatUsers])) {
+        $chatUsers = [$activeChat->getUser()->getId(), $activeChat->getOwner()->getId()];
+        unset($chatUsers[array_keys($chatUsers, $sender->getId())[0]]);
+        $calleeId = reset($chatUsers); //now chatUsers contain only one element with calleeId
+        Logger::info($this, '--------------------------' . $calleeId);
+        if(isset($this->userIdToUserTopicId[$calleeId])) {
             $message->setIsRead(true);
         } else {
             $message->setIsRead(false);
@@ -202,10 +212,11 @@ class InternalClient extends Client
             $page = (isset($kwargs->page)) ? $kwargs->page : 1;
             $chats = $chatRepo->getNewAndUpdatedChats($user, true, $page);
         } catch (\Exception $e){
-            var_dump($e->getTraceAsString());exit;
+            var_dump($e->getMessage(), $e->getTraceAsString());exit;
             Logger::error($this, $e->getMessage(), $e->getTrace());
 
         }
+
         return $chats;
     }
 

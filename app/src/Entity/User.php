@@ -162,12 +162,18 @@ class User implements UserInterface
      */
     private $messages;
 
+    /**
+     * @ORM\OneToMany(targetEntity=Chat::class, mappedBy="last_active_user")
+     */
+    private $last_active_chats;
+
     public function __construct()
     {
         $this->img = self::DEFAULT_USER_ICON;
         $this->projects = new ArrayCollection();
         $this->chats = new ArrayCollection();
         $this->messages = new ArrayCollection();
+        $this->last_active_chats = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -431,6 +437,37 @@ class User implements UserInterface
             // set the owning side to null (unless already changed)
             if ($message->getUser() === $this) {
                 $message->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Chat[]
+     */
+    public function getLastActiveChats(): Collection
+    {
+        return $this->last_active_chats;
+    }
+
+    public function addLastActiveChat(Chat $lastActiveChat): self
+    {
+        if (!$this->last_active_chats->contains($lastActiveChat)) {
+            $this->last_active_chats[] = $lastActiveChat;
+            $lastActiveChat->setLastActiveUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeLastActiveChat(Chat $lastActiveChat): self
+    {
+        if ($this->last_active_chats->contains($lastActiveChat)) {
+            $this->last_active_chats->removeElement($lastActiveChat);
+            // set the owning side to null (unless already changed)
+            if ($lastActiveChat->getLastActiveUser() === $this) {
+                $lastActiveChat->setLastActiveUser(null);
             }
         }
 
