@@ -163,7 +163,7 @@ class User implements UserInterface
     private $messages;
 
     /**
-     * @ORM\OneToMany(targetEntity=Chat::class, mappedBy="last_active_user")
+     * @ORM\OneToMany(targetEntity=Chat::class, mappedBy="unread_messages_sender")
      */
     private $last_active_chats;
 

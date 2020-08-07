@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\Chat;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Query\Expr\Join;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -22,13 +23,20 @@ class ChatRepository extends ServiceEntityRepository
     }
 
     /**
-     * Finds chat by uuid
      * @param string $uuid
+     * @param User $user
      * @return Chat|null
+     * @throws \Doctrine\ORM\NoResultException
+     * @throws \Doctrine\ORM\NonUniqueResultException
      */
-    public function findChatByUuid(string $uuid):? Chat
+    public function findChatByUuid(string $uuid, User $user):? Chat
     {
-        return $this->findOneBy(['uuid' => $uuid]);
+        return $this->createQueryBuilder('c')
+            ->andWhere('(c.owner_id = :user_id OR c.user_id = :user_id) AND (c.uuid = :uuid)')
+            ->setParameter('user_id', $user->getId())
+            ->setParameter('uuid', $uuid)
+            ->getQuery()
+            ->getSingleResult();
     }
 
     /**
@@ -50,16 +58,22 @@ class ChatRepository extends ServiceEntityRepository
         }
 
         $result = $this->createQueryBuilder('c')
-            ->leftJoin('c.last_active_user', 'lau')
-            ->leftJoin('c.messages', 'm', Join::WITH, 'c.id = m.chat_id AND m.ordering = ( SELECT MAX(msg.ordering) FROM App\Entity\Message msg WHERE msg.chat_id = c.id )')
-            ->addSelect('lau')
+            ->leftJoin('c.unread_messages_sender', 'ums')
+            ->leftJoin(
+                'c.messages',
+                'm',
+                Join::WITH,
+                'c.id = m.chat_id AND m.ordering = ( SELECT MAX(msg.ordering) FROM App\Entity\Message msg WHERE msg.chat_id = c.id )'
+                )
+            ->addSelect('ums')
             ->addSelect('m')
-            ->andWhere($messageCountCondition .' (c.owner_id = :owner_id OR c.user_id = :user_id) AND (lau.id <> :user_id)')
+            ->andWhere($messageCountCondition .' (c.owner_id = :owner_id OR c.user_id = :user_id) AND (ums.id <> :user_id)')
             ->setParameter('owner_id', $user->getId())
             ->setParameter('user_id', $user->getId())
             ->setFirstResult($offset)
             ->setMaxResults($perPage)
             ->getQuery()
+            ->setFetchMode('App\Entity\Chat', "messages", ClassMetadata::FETCH_EAGER)
             ->getArrayResult();
 
         return $result;

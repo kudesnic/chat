@@ -4,7 +4,9 @@ namespace App\Repository;
 
 use App\Entity\Chat;
 use App\Entity\Message;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -35,6 +37,26 @@ class MessageRepository extends ServiceEntityRepository
             ->setParameter('chat_id', $chat->getId())
             ->getQuery()
             ->getSingleScalarResult();
+    }
+
+    public function getChatMessages(Chat $chat, User $user, int $page = 1, int $perPage = 20):array
+    {
+        $offset = ($page - 1) * $perPage;
+        $result = $this->createQueryBuilder('m')
+            ->leftJoin('m.user', 'u')
+            ->leftJoin('m.chat', 'c')
+            ->addSelect('u')
+            ->addSelect('c')
+            ->andWhere('(m.chat_id = :chat_id) AND (c.owner_id = :user_id OR c.user_id = :user_id) ')
+            ->setParameter('chat_id', $chat->getId())
+            ->setParameter('user_id', $user->getId())
+            ->setFirstResult($offset)
+            ->setMaxResults($perPage)
+            ->getQuery()
+            ->setFetchMode('App\Entity\User', "user", ClassMetadata::FETCH_EAGER)
+            ->getArrayResult();
+
+        return $result;
     }
 
     // /**

@@ -96,11 +96,12 @@ class Chat
     private $updated;
 
     /**
-     * This field added to chat entity for better performance
+     * This field added to chat entity for better performance.
+     * If strategy == self::STRATEGY_EXTERNAL_CHAT, then unread_messages_sender == null
      *
      * @ORM\ManyToOne(targetEntity=User::class, inversedBy="last_active_chats")
      */
-    private $last_active_user;
+    private $unread_messages_sender;
 
     public function __construct()
     {
@@ -169,37 +170,6 @@ class Chat
         return $this;
     }
 
-    /**
-     * @return Collection|Message[]
-     */
-    public function getMessages(): Collection
-    {
-        return $this->messages;
-    }
-
-    public function addMessage(Message $message): self
-    {
-        if (!$this->messages->contains($message)) {
-            $this->messages[] = $message;
-            $message->setChat($this);
-        }
-
-        return $this;
-    }
-
-    public function removeMessage(Message $message): self
-    {
-        if ($this->messages->contains($message)) {
-            $this->messages->removeElement($message);
-            // set the owning side to null (unless already changed)
-            if ($message->getChat() === $this) {
-                $message->setChat(null);
-            }
-        }
-
-        return $this;
-    }
-
     public function getOwner(): ?User
     {
         return $this->owner;
@@ -246,14 +216,51 @@ class Chat
         return $this->updated;
     }
 
-    public function getLastActiveUser(): ?User
+    public function getUnreadMessagesSender(): ?User
     {
-        return $this->last_active_user;
+        return $this->unread_messages_sender;
     }
 
-    public function setLastActiveUser(?User $last_active_user): self
+    /**
+     * If strategy == self::STRATEGY_EXTERNAL_CHAT, then unread_messages_sender == null
+     *
+     * @param User|null $unread_messages_sender
+     * @return Chat
+     */
+    public function setUnreadMessagesSender(?User $unread_messages_sender): self
     {
-        $this->last_active_user = $last_active_user;
+        $this->unread_messages_sender = $unread_messages_sender;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Message[]
+     */
+    public function getMessages(): Collection
+    {
+        return $this->messages;
+    }
+
+    public function addMessage(Message $message): self
+    {
+        if (!$this->messages->contains($message)) {
+            $this->messages[] = $message;
+            $message->setChat($this);
+        }
+
+        return $this;
+    }
+
+    public function removeMessage(Message $message): self
+    {
+        if ($this->messages->contains($message)) {
+            $this->messages->removeElement($message);
+            // set the owning side to null (unless already changed)
+            if ($message->getChat() === $this) {
+                $message->setChat(null);
+            }
+        }
 
         return $this;
     }

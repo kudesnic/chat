@@ -73,12 +73,6 @@ class Message
     private $ordering;
 
     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Chat", inversedBy="message")
-     * @ORM\JoinColumn(nullable=false, onDelete="CASCADE")
-     */
-    private $chat;
-
-    /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Message", inversedBy="messages")
      * @ORM\JoinColumn(nullable=true, onDelete="CASCADE")
      */
@@ -99,6 +93,12 @@ class Message
      * @ORM\Column(type="boolean")
      */
     private $is_read;
+
+    /**
+     * @ORM\ManyToOne(targetEntity=Chat::class, inversedBy="messages")
+     * @ORM\JoinColumn(nullable=false)
+     */
+    private $chat;
 
     public function __construct()
     {
@@ -148,18 +148,6 @@ class Message
     public function getUserId(): ?int
     {
         return $this->user_id;
-    }
-
-    public function getChat(): ?Chat
-    {
-        return $this->chat;
-    }
-
-    public function setChat(?Chat $chat): self
-    {
-        $this->chat = $chat;
-
-        return $this;
     }
 
     public function getParent(): ?self
@@ -254,6 +242,18 @@ class Message
     public function setIsRead(bool $is_read): self
     {
         $this->is_read = $is_read;
+
+        return $this;
+    }
+
+    public function getChat(): ?Chat
+    {
+        return $this->chat;
+    }
+
+    public function setChat(?Chat $chat): self
+    {
+        $this->chat = $chat;
 
         return $this;
     }
