@@ -11,7 +11,10 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface;
 use Symfony\Component\HttpKernel\KernelInterface;
+use Thruway\Authentication\AuthenticationManager;
+use Thruway\Authentication\WampCraAuthProvider;
 use Thruway\Peer\Router;
+use Thruway\Realm;
 use Thruway\Transport\RatchetTransportProvider;
 
 class WebsocketThruwayServerCommand extends Command

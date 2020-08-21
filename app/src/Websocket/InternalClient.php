@@ -1,26 +1,17 @@
 <?php
 namespace App\Websocket;
 
-
 use App\Entity\Chat;
 use App\Entity\Message;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
-use Lexik\Bundle\JWTAuthenticationBundle\Security\Authentication\Token\JWTUserToken;
-use Ramsey\Uuid\Uuid;
-use React\EventLoop\Factory;
-use React\EventLoop\LoopInterface;
 use React\ZMQ\Context;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Thruway\ClientSession;
+use Thruway\Authentication\WampCraUserDbInterface;
 use Thruway\Common\Utils;
 use Thruway\Logging\Logger;
-use Thruway\Message\PublishMessage;
-use Thruway\Message\UnsubscribedMessage;
 use Thruway\Message\UnsubscribeMessage;
-use Thruway\Module\RouterModuleInterface;
 use Thruway\Peer\Client;
-use Thruway\Peer\RouterInterface;
 use Thruway\Transport\TransportInterface;
 use Thruway\WampErrorException;
 
@@ -70,6 +61,7 @@ class InternalClient extends Client
         $session->register('getMainUserTopicInfo', [$this, 'getMainUserTopicInfo']);
         $session->register('getNewAndUpdatedChats', [$this, 'getNewAndUpdatedChats']);
         $session->subscribe('wamp.metaevent.session.on_leave', [$this, 'onSessionLeave']);
+        $session->subscribe('wamp.metaevent.session.on_join', [$this, 'onSessionJoin']);
 
     }
 
@@ -78,10 +70,22 @@ class InternalClient extends Client
      * @return array
      * @throws WampErrorException
      */
-    public function onSessionLeave($args, $kwargs):array
+    public function onSessionLeave($args, $kwargs)
     {
-        Logger::debug($this, '-------------On leave event' . implode(',' , $kwargs));
+        Logger::debug($this, '-------------On leave event' );
+
     }
+
+    /**
+     * @param $args
+     * @return array
+     * @throws WampErrorException
+     */
+    public function onSessionJoin($args, $kwargs)
+    {
+        Logger::debug($this, '-------------On JOIN event');
+    }
+
 
     /**
      * @param $args
@@ -109,13 +113,11 @@ class InternalClient extends Client
             $this->getSession()->subscribe($chat->getUuid(), [$this, 'incomeMessage']);
             $this->chatUiidToIdMapping[$chat->getUuid()] = $chat->getId(); // TODO: Remove mapping element in onCLose and onUnsubscribe events
             $this->userIdToActiveTopicUuid[$owner->getId()] = $chat->getUuid();
-            $this->userIdToActiveTopicUuid[$user->getId()] = $chat->getUuid();
+//            $this->userIdToActiveTopicUuid[$user->getId()] = $chat->getUuid();
             $this->activeTopics[] = $chat->getUuid();
             //if user online
-            if(isset($this->userIdToUserTopicId[$kwargs->calleeId])){
+            if($this->checkIfUserOnline($kwargs->calleeId)){
                 Logger::info($this, '-------------Initiated chat with online user. callee user chat ==' . $this->userIdToUserTopicId[$kwargs->calleeId]);///TODO: add support for external client
-
-               $this->getSession()->call('connectToNewChat', [], ['chatUuid' => $chat->getUuid()]);
                 $this->getSession()->publish($this->userIdToUserTopicId[$kwargs->calleeId],
                     [],
                     ['type' => 'income_chat', 'chatUuid' => $chat->getUuid()]
@@ -139,28 +141,35 @@ class InternalClient extends Client
             $owner = $this->getAuthenticatedUser($kwargs->userToken);
             $userRepo = $this->em->getRepository(User::class);
             $chatRepo = $this->em->getRepository(Chat::class);
-            $user = $userRepo->find($kwargs->calleeId);
+            $callee = $userRepo->find($kwargs->calleeId);
 
-            if($user->getTreeRoot() != $owner->getTreeRoot()){
+            if($callee->getTreeRoot() != $owner->getTreeRoot()){
                 throw new WampErrorException('chat.validation.error', ['Callee is not in the same users tree']);
             }
-            $chat = $chatRepo->findChatByUuid($kwargs->chatUuid, $user);
+            $chat = $chatRepo->findChatByUuid($kwargs->chatUuid, $callee);
             $this->getSession()->subscribe($chat->getUuid(), [$this, 'incomeMessage']);
             $this->chatUiidToIdMapping[$chat->getUuid()] = $chat->getId(); // TODO: Remove mapping element in onCLose and onUnsubscribe events
-            if($this->userIdToActiveTopicUuid[$user->getId()]){
-                $this->getSession()->sendMessage(new UnsubscribeMessage());
+
+            if($this->userIdToActiveTopicUuid[$callee->getId()]){
+                $subscriptionId = $this
+                    ->getMatcher()
+                    ->matches($this->userIdToActiveTopicUuid[$callee->getId()], $this->getUri(), []);
+                $this->getSession()->sendMessage(new UnsubscribeMessage(Utils::getUniqueId(), $subscriptionId));
+                Logger::info($this, '-------------Unsubscribe');
+
 //                unsubscribe somehow
             }
-            $this->userIdToActiveTopicUuid[$user->getId()] = $chat->getUuid();
+
+            $this->userIdToActiveTopicUuid[$callee->getId()] = $chat->getUuid();
             $this->userIdToActiveTopicUuid[$owner->getId()] = $chat->getUuid();
             $this->activeTopics[] = $chat->getUuid();
             //if user online
             if(isset($this->userIdToUserTopicId[$kwargs->calleeId])){
-                $this->getSession()->call('connectToNewChat', [], ['chatUuid' => $chat->getUuid()], ['exclude_me' => true]);
-//                $this->getSession()->publish($this->userIdToUserTopicId[$kwargs->calleeId],
-//                    ['type' => 'income_chat', 'chatUuid' => $chat->getUuid()],
-//                    ['exclude_me' => true]
-//                );
+//                $this->getSession()->call('connectToNewChat', [], ['chatUuid' => $chat->getUuid()], ['exclude_me' => true]);
+                $this->getSession()->publish($this->userIdToUserTopicId[$kwargs->calleeId],
+                    ['type' => 'income_chat', 'chatUuid' => $chat->getUuid()],
+                    ['exclude_me' => true]
+                );
             } else {
                 Logger::info($this, '-------------Chat to offline user');
             }
@@ -225,7 +234,7 @@ class InternalClient extends Client
         unset($chatUsers[array_keys($chatUsers, $sender->getId())[0]]);
         $calleeId = reset($chatUsers); //now chatUsers contain only one element with calleeId
         Logger::info($this, '--------------------------' . $calleeId);
-        if(isset($this->userIdToUserTopicId[$calleeId])) {
+        if($this->checkIfUserOnline($calleeId)) {
             $message->setIsRead(true);
         } else {
             $message->setIsRead(false);
@@ -369,6 +378,34 @@ class InternalClient extends Client
                 throw new WampErrorException('message.invalid_arguments', [$property . ' is required']);
             }
         }
+    }
+
+    private function checkIfUserOnline(int $userId)
+    {
+        $isOnline = false;
+        $isOnline = $this->session->call('checkIfOnline', [])->then(
+            function ($res) use ($isOnline, $userId){
+                if($res->user_id == $userId){
+                    $isOnline = true;
+                }
+
+                return $isOnline;
+            }
+        );
+        var_dump('--------is online', $isOnline); exit;
+        if(!$isOnline){
+            if(isset($this->userIdToUserTopicId[$userId])){
+                unset($this->userIdToUserTopicId[$userId]);
+            }
+            if(isset($this->userIdToActiveTopicUuid[$userId])){
+                $activeChatUuid = $this->userIdToActiveTopicUuid[$userId];
+                unset($this->chatUiidToIdMapping[$activeChatUuid]);
+                unset($this->userIdToActiveTopicUuid[$userId]);
+            }
+
+        }
+
+        return $isOnline;
     }
 
 }
