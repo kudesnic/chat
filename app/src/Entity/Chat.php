@@ -45,11 +45,6 @@ class Chat
     private $owner_id;
 
     /**
-     * @ORM\Column(type="integer", nullable=true)
-     */
-    private $user_id;
-
-    /**
      * @ORM\Column(type="string", length=32)
      */
     private $strategy;
@@ -64,12 +59,6 @@ class Chat
      * @ORM\JoinColumn(nullable=false, onDelete="CASCADE")
      */
     private $owner;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="own_chats")
-     * @ORM\JoinColumn(nullable=false, onDelete="CASCADE")
-     */
-    private $user;
 
     /**
      * Property increments automatically. Check MessageEntityListener for details.
@@ -103,9 +92,22 @@ class Chat
      */
     private $unread_messages_sender;
 
+    /**
+     * @ORM\OneToMany(targetEntity=Participant::class, mappedBy="chat")
+     */
+    private $participants;
+
+    /**
+     * @ORM\ManyToOne(targetEntity=Project::class, inversedBy="chats")
+     * @ORM\JoinColumn(nullable=false)
+     */
+    private $project;
+
     public function __construct()
     {
         $this->messages = new ArrayCollection();
+        $this->participants = new ArrayCollection();
+
         //wamp protocol cant use strings with dashes as a topic name, but postgres uuid column type accepts uuids without dashes
         $factory = new UuidFactory();
         $factory->setValidator(new CustomUuidValidator());
@@ -182,17 +184,6 @@ class Chat
         return $this;
     }
 
-    public function getUser(): ?User
-    {
-        return $this->user;
-    }
-
-    public function setUser(?User $user): self
-    {
-        $this->user = $user;
-
-        return $this;
-    }
 
     public function getUnreadMessagesCount(): ?int
     {
@@ -261,6 +252,49 @@ class Chat
                 $message->setChat(null);
             }
         }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Participant[]
+     */
+    public function getParticipants(): Collection
+    {
+        return $this->participants;
+    }
+
+    public function addParticipant(Participant $participant): self
+    {
+        if (!$this->participants->contains($participant)) {
+            $this->participants[] = $participant;
+            $participant->setChat($this);
+        }
+
+        return $this;
+    }
+
+    public function removeParticipant(Participant $participant): self
+    {
+        if ($this->participants->contains($participant)) {
+            $this->participants->removeElement($participant);
+            // set the owning side to null (unless already changed)
+            if ($participant->getChat() === $this) {
+                $participant->setChat(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getProject(): ?Project
+    {
+        return $this->project;
+    }
+
+    public function setProject(?Project $project): self
+    {
+        $this->project = $project;
 
         return $this;
     }
