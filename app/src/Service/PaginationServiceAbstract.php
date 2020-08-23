@@ -107,7 +107,7 @@ abstract class PaginationServiceAbstract
      * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
      * @return array
      */
-    protected function buildPagination(?array $rows):array
+    public function buildPagination(?array $rows):array
     {
         if($this->normalize){
             $classMetadataFactory = null;

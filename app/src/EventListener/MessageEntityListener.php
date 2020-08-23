@@ -25,13 +25,15 @@ class MessageEntityListener
     {
         $em = $eventArgs->getEntityManager();
         if($entity->getIsRead() == false){
-            $chat = $entity->getChat();
-            $chat->setUnreadMessagesCount($chat->getUnreadMessagesCount() + 1);
-            if(!is_null($entity->getUser())){
-                $chat->setUnreadMessagesSender($entity->getUser());
+            $participants = $entity->getChat()->getParticipants();
+            foreach ($participants as $participant){
+                if($participant->getUser()->getId() != $entity->getUser()->getId()){
+                    $participant->setUnreadMessagesCount($participant->getUnreadMessagesCount() + 1);
+                }
+                $em->persist($participant);
+
             }
-            $em->persist($chat);
-            $em->flush($chat);
+//            $em->flush();//????
         }
     }
 

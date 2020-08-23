@@ -28,6 +28,11 @@ class Participant
      */
     private $client;
 
+    /**
+     * @ORM\Column(type="smallint", nullable=true)
+     */
+    private $unread_messages_count;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -53,6 +58,18 @@ class Participant
     public function setClient(?Client $client): self
     {
         $this->client = $client;
+
+        return $this;
+    }
+
+    public function getUnreadMessagesCount(): ?int
+    {
+        return $this->unread_messages_count;
+    }
+
+    public function setUnreadMessagesCount(?int $unread_messages_count): self
+    {
+        $this->unread_messages_count = $unread_messages_count;
 
         return $this;
     }

@@ -17,10 +17,12 @@ use Gedmo\Mapping\Annotation as Gedmo;
 class Chat
 {
     const STRATEGY_INTERNAL_CHAT = 'internal_chat';
+    const STRATEGY_INTERNAL_GROUP_CHAT = 'internal_group_chat';
     const STRATEGY_EXTERNAL_CHAT = 'external_chat';
     const STRATEGIES = [
         self::STRATEGY_INTERNAL_CHAT,
-        self::STRATEGY_EXTERNAL_CHAT
+        self::STRATEGY_EXTERNAL_CHAT,
+        self::STRATEGY_INTERNAL_GROUP_CHAT
     ];
 
 
@@ -61,14 +63,6 @@ class Chat
     private $owner;
 
     /**
-     * Property increments automatically. Check MessageEntityListener for details.
-     * This field added to chat entity for better performance
-     *
-     * @ORM\Column(type="smallint", nullable=true)
-     */
-    private $unread_messages_count;
-
-    /**
      * @var \DateTime $created
      *
      * @Gedmo\Timestampable(on="create")
@@ -83,14 +77,6 @@ class Chat
      * @ORM\Column(type="datetime")
      */
     private $updated;
-
-    /**
-     * This field added to chat entity for better performance.
-     * If strategy == self::STRATEGY_EXTERNAL_CHAT, then unread_messages_sender == null
-     *
-     * @ORM\ManyToOne(targetEntity=User::class, inversedBy="last_active_chats")
-     */
-    private $unread_messages_sender;
 
     /**
      * @ORM\OneToMany(targetEntity=Participant::class, mappedBy="chat")
@@ -184,19 +170,6 @@ class Chat
         return $this;
     }
 
-
-    public function getUnreadMessagesCount(): ?int
-    {
-        return $this->unread_messages_count;
-    }
-
-    public function setUnreadMessagesCount(?int $unread_messages_count): self
-    {
-        $this->unread_messages_count = $unread_messages_count;
-
-        return $this;
-    }
-
     public function getCreated(): int
     {
         return $this->created;
@@ -205,24 +178,6 @@ class Chat
     public function getUpdated(): int
     {
         return $this->updated;
-    }
-
-    public function getUnreadMessagesSender(): ?User
-    {
-        return $this->unread_messages_sender;
-    }
-
-    /**
-     * If strategy == self::STRATEGY_EXTERNAL_CHAT, then unread_messages_sender == null
-     *
-     * @param User|null $unread_messages_sender
-     * @return Chat
-     */
-    public function setUnreadMessagesSender(?User $unread_messages_sender): self
-    {
-        $this->unread_messages_sender = $unread_messages_sender;
-
-        return $this;
     }
 
     /**

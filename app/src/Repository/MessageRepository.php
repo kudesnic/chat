@@ -7,6 +7,9 @@ use App\Entity\Message;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\Mapping\ClassMetadata;
+use Doctrine\ORM\Query;
+use Doctrine\ORM\Query\Expr\Join;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -39,26 +42,34 @@ class MessageRepository extends ServiceEntityRepository
             ->getSingleScalarResult();
     }
 
-    public function getChatMessages(Chat $chat, User $user, int $page = 1, int $perPage = 20):array
+
+    public function getChatMessagesQueryBuilder(Chat $chat, User $user):QueryBuilder
     {
-        $offset = ($page - 1) * $perPage;
-        $result = $this->createQueryBuilder('m')
+        return $this->createQueryBuilder('m')
             ->leftJoin('m.user', 'u')
-            ->leftJoin('m.chat', 'c')
+            ->join('m.chat', 'c')
+
             ->addSelect('u')
             ->addSelect('c')
-            ->andWhere('(m.chat_id = :chat_id) AND (c.owner_id = :user_id OR c.user_id = :user_id) ')
+            ->andWhere('(m.chat_id = :chat_id) ')
             ->setParameter('chat_id', $chat->getId())
-            ->setParameter('user_id', $user->getId())
-            ->setFirstResult($offset)
-            ->setMaxResults($perPage)
-            ->getQuery()
-            ->setFetchMode('App\Entity\User', "user", ClassMetadata::FETCH_EAGER)
-            ->getArrayResult();
-
-        return $result;
+            ->setParameter('user_id', $user->getId());
     }
 
+    public function getChatMessages(Chat $chat, User $user):array
+    {
+        return $this->getChatMessagesQueryBuilder($chat, $user)
+            ->getQuery()
+            ->getArrayResult();
+    }
+
+    /**
+     * @param Query $query
+     */
+    public function modifyQueryToEager(Query &$query)
+    {
+        $query->setFetchMode('App\Entity\User', "user", ClassMetadata::FETCH_EAGER);
+    }
     // /**
     //  * @return Message[] Returns an array of Message objects
     //  */

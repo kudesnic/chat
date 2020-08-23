@@ -6,7 +6,9 @@ use App\Entity\Chat;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\Mapping\ClassMetadata;
+use Doctrine\ORM\Query;
 use Doctrine\ORM\Query\Expr\Join;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -29,10 +31,21 @@ class ChatRepository extends ServiceEntityRepository
      * @throws \Doctrine\ORM\NoResultException
      * @throws \Doctrine\ORM\NonUniqueResultException
      */
-    public function findChatByUuid(string $uuid, User $user):? Chat
+    public function findChatByUuidAndUser(string $uuid, User $user):? Chat
     {
         return $this->createQueryBuilder('c')
-            ->andWhere('(c.owner_id = :user_id OR c.user_id = :user_id) AND (c.uuid = :uuid)')
+            ->join('m.participants', 'p')
+            ->leftJoin(
+                'c.messages',
+                'm',
+                Join::WITH,
+                'c.id = m.chat_id AND m.ordering > (( SELECT MAX(msg.ordering) FROM App\Entity\Message msg WHERE msg.chat_id = c.id ) - 20)'
+            )
+            ->join('m.user', 'message_user')
+            ->addSelect('p')
+            ->addSelect('m')
+            ->addSelect('message_user')
+            ->andWhere('p.user_id = :user_id AND c.uuid = :uuid')
             ->setParameter('user_id', $user->getId())
             ->setParameter('uuid', $uuid)
             ->getQuery()
@@ -48,91 +61,52 @@ class ChatRepository extends ServiceEntityRepository
      * @param int $perPage
      * @return array
      */
-    public function getNewAndUpdatedChats(User $user, bool $onlyUpdatedChats = true, int $page = 1, int $perPage = 20):array
+    public function getNewAndUpdatedChats(User $user, bool $onlyUpdatedChats = true):array
     {
-        $offset = ($page - 1) * $perPage;
-        if($onlyUpdatedChats){
-            $messageCountCondition = 'c.unread_messages_count > 0 AND ';
-        } else {
-            $messageCountCondition = '';
-        }
+        return $this->getNewAndUpdatedChatsQueryBuilder($user, $onlyUpdatedChats)
+            ->getArrayResult();
+    }
 
-        $result = $this->createQueryBuilder('c')
-            ->leftJoin('c.unread_messages_sender', 'ums')
+    /**
+     * @param User $user
+     * @param bool $onlyUpdatedChats
+     * @return QueryBuilder
+     */
+    public function getNewAndUpdatedChatsQueryBuilder(User $user, bool $onlyUpdatedChats = true):QueryBuilder
+    {
+        $qb = $this->createQueryBuilder('c')
+            ->join('c.participants', 'p')
             ->leftJoin(
                 'c.messages',
                 'm',
                 Join::WITH,
                 'c.id = m.chat_id AND m.ordering = ( SELECT MAX(msg.ordering) FROM App\Entity\Message msg WHERE msg.chat_id = c.id )'
-                )
+            )
+            ->leftJoin(
+                'c.participants',
+                'other_participants',
+                Join::WITH,
+                'c.id = other_participants.chat_id AND other_participants.user_id <> :user_id'
+            )
+            ->join('other_participants.user', 'otherp_user')
             ->addSelect('ums')
+            ->addSelect('other_participants')
+            ->addSelect('otherp_user')
             ->addSelect('m')
-            ->andWhere($messageCountCondition .' (c.owner_id = :owner_id OR c.user_id = :user_id) AND (ums.id <> :user_id)')
+            ->andWhere('p.user_id = :owner_id AND p.unread_messages_count IS NOT NULL')
             ->setParameter('owner_id', $user->getId())
-            ->setParameter('user_id', $user->getId())
-            ->setFirstResult($offset)
-            ->setMaxResults($perPage)
-            ->getQuery()
-            ->setFetchMode('App\Entity\Chat', "messages", ClassMetadata::FETCH_EAGER)
-            ->getArrayResult();
+            ->setParameter('user_id', $user->getId());
 
-        return $result;
+        return $qb;
     }
-//
-//    /**
-//     * Extracts new chats and existing chats with new messages
-//     *
-//     * @param User $user
-//     * @param int $page
-//     * @return array
-//     */
-//    public function getNewAndUpdatedChats(User $user, int $page = 0):array
-//    {
-//        $perPage = 20;
-//        $entityManager = $this->getEntityManager();
-//        $offset = $page * $perPage;
-//
-//        return $entityManager->createQuery(
-//            'SELECT c FROM App\Entity\Chat c
-//            WHERE c.unread_messages_count > 0 AND (c.owner_id = :owner_id OR c.user_id = :user_id)
-//            ORDER BY c.updated DESC')
-//            ->leftJoin('p.user', 'u')
-//            ->leftJoin('p.owner', 'o')
-//            ->setParameter('owner_id', $user->getId())
-//            ->setParameter('user_id', $user->getId())
-//            ->addSelect('u')
-//            ->addSelect('o')
-//            ->setFirstResult($offset)
-//            ->setMaxResults($perPage)
-//            ->getResult();
-//    }
 
-    // /**
-    //  * @return Chat[] Returns an array of Chat objects
-    //  */
-    /*
-    public function findByExampleField($value)
+    /**
+     * @param Query $query
+     */
+    public function modifyQueryToEager(Query &$query)
     {
-        return $this->createQueryBuilder('c')
-            ->andWhere('c.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('c.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
+         $query->setFetchMode('App\Entity\Chat', "messages", ClassMetadata::FETCH_EAGER)
+            ->setFetchMode('App\Entity\Participant', "other_participants", ClassMetadata::FETCH_EAGER)
+            ->setFetchMode('App\Entity\User', "otherp_user", ClassMetadata::FETCH_EAGER);
     }
-    */
-
-    /*
-    public function findOneBySomeField($value): ?Chat
-    {
-        return $this->createQueryBuilder('c')
-            ->andWhere('c.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
-    }
-    */
 }
