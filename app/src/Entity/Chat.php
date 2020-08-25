@@ -83,12 +83,6 @@ class Chat
      */
     private $participants;
 
-    /**
-     * @ORM\ManyToOne(targetEntity=Project::class, inversedBy="chats")
-     * @ORM\JoinColumn(nullable=false)
-     */
-    private $project;
-
     public function __construct()
     {
         $this->messages = new ArrayCollection();
@@ -242,15 +236,4 @@ class Chat
         return $this;
     }
 
-    public function getProject(): ?Project
-    {
-        return $this->project;
-    }
-
-    public function setProject(?Project $project): self
-    {
-        $this->project = $project;
-
-        return $this;
-    }
 }

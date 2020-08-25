@@ -32,7 +32,7 @@ class MessageRepository extends ServiceEntityRepository
      * @throws \Doctrine\ORM\NoResultException
      * @throws \Doctrine\ORM\NonUniqueResultException
      */
-    public function getMaxOrderForChat(Chat $chat):int
+    public function getMaxMessageOrderForChat(Chat $chat):int
     {
         return (int) $this->createQueryBuilder('message')
             ->select('MAX(message.ordering)')

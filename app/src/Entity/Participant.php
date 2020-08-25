@@ -33,6 +33,11 @@ class Participant
      */
     private $unread_messages_count;
 
+    /**
+     * @ORM\ManyToOne(targetEntity=User::class, inversedBy="participants")
+     */
+    private $user;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -70,6 +75,18 @@ class Participant
     public function setUnreadMessagesCount(?int $unread_messages_count): self
     {
         $this->unread_messages_count = $unread_messages_count;
+
+        return $this;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): self
+    {
+        $this->user = $user;
 
         return $this;
     }

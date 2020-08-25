@@ -2,6 +2,7 @@
 
 namespace App\EventListener;
 
+use App\Entity\Chat;
 use App\Entity\Message;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\LifecycleEventArgs;
@@ -24,15 +25,18 @@ class MessageEntityListener
     public function prePersist(Message $entity, LifecycleEventArgs $eventArgs)
     {
         $em = $eventArgs->getEntityManager();
-        if($entity->getIsRead() == false){
-            $participants = $entity->getChat()->getParticipants();
-            foreach ($participants as $participant){
-                if($participant->getUser()->getId() != $entity->getUser()->getId()){
-                    $participant->setUnreadMessagesCount($participant->getUnreadMessagesCount() + 1);
-                }
-                $em->persist($participant);
 
+        if(is_null($entity->getOrdering())){
+            $ordering = $em->getRepository(Message::class)->getMaxMessageOrderForChat($entity->getChat());
+            $entity->setOrdering($ordering);
+        }
+
+        $participants = $entity->getChat()->getParticipants();
+        foreach ($participants as $participant){
+            if($participant->getUser()->getId() != $entity->getUser()->getId()){
+                $participant->setUnreadMessagesCount($participant->getUnreadMessagesCount() + 1);
             }
+            $em->persist($participant);
 //            $em->flush();//????
         }
     }

@@ -7,6 +7,7 @@ use App\Entity\Chat;
 use App\Entity\Message;
 use App\Entity\User;
 use App\Http\ApiResponse;
+use App\Repository\ParticipantRepository;
 use App\Service\JWTUserService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -20,7 +21,7 @@ use Symfony\Component\Routing\Annotation\Route;
  * Class ChatController
  * @package App\Controller
  *
- * @Route("message", name="message.")
+ * @Route("/message", name="message.")
  */
 class MessageController extends AbstractController
 {
@@ -44,7 +45,7 @@ class MessageController extends AbstractController
     }
 
     /**
-     * @Route("/", name="store", methods={"POST"})
+     * @Route("", name="store", methods={"POST"})
      *
 
      * @param MessageStoreDTORequest $request
@@ -58,22 +59,41 @@ class MessageController extends AbstractController
     public function store(
         MessageStoreDTORequest $request,
         JWTUserService $userHolder,
+        ParticipantRepository $participantRepository,
         TranslatorInterface $translator
     ) {
         $user = $userHolder->getUser($request->getRequest());
-        $chat = $this->entityManager
-            ->getRepository(Chat::class)->findChatByUuidAndUser($request->chat_uuid, $user);
+
+        if($request->chat_uuid){
+            $chat = $this->entityManager
+                ->getRepository(Chat::class)->findChatByUuidAndUser($request->chat_uuid, $user);
+        } else {
+            $chat = new Chat();
+            $chat->setStrategy(Chat::STRATEGY_INTERNAL_CHAT);
+            $chat->setOwner($user);
+            $this->entityManager->persist($chat);
+            $userRepository = $this->entityManager->getRepository(User::class);
+            $receiverUser = $userRepository->find($request->to_user_id);
+            $receiverParticipant = $participantRepository->createUserParticipant($chat, $receiverUser);
+            $receiverParticipant->setUnreadMessagesCount(1);
+            $this->entityManager->persist($receiverParticipant);
+
+            $senderParticipant = $participantRepository->createUserParticipant($chat, $user);
+            $this->entityManager->persist($senderParticipant);
+        }
+
         if(is_null($chat)){
             throw new NotFoundHttpException(
                 $translator->trans('You dont participate in chat with uuid = ' . $request->chat_uuid)
             );
         }
+
         $messageEntity = new Message();
         $messageEntity->setUser($user);
         $messageEntity->setChat($chat);
         $messageEntity->setText($request->text);
         $this->entityManager->persist($messageEntity);
-        $this->entityManager->flush($messageEntity);
+        $this->entityManager->flush();
 
         return new ApiResponse($messageEntity, Response::HTTP_CREATED);
     }

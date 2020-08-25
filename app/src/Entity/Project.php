@@ -52,14 +52,8 @@ class Project
      */
     private $owner;
 
-    /**
-     * @ORM\OneToMany(targetEntity=Chat::class, mappedBy="project")
-     */
-    private $chats;
-
     public function __construct()
     {
-        $this->chats = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -139,34 +133,4 @@ class Project
         return $this;
     }
 
-    /**
-     * @return Collection|Chat[]
-     */
-    public function getChats(): Collection
-    {
-        return $this->chats;
-    }
-
-    public function addChat(Chat $chat): self
-    {
-        if (!$this->chats->contains($chat)) {
-            $this->chats[] = $chat;
-            $chat->setProject($this);
-        }
-
-        return $this;
-    }
-
-    public function removeChat(Chat $chat): self
-    {
-        if ($this->chats->contains($chat)) {
-            $this->chats->removeElement($chat);
-            // set the owning side to null (unless already changed)
-            if ($chat->getProject() === $this) {
-                $chat->setProject(null);
-            }
-        }
-
-        return $this;
-    }
 }

@@ -1,3 +1,5 @@
 Old password required!: Old password required. Specify old_password field!
 The value {{ value }} is not unique.: The value {{ value }} is not unique.
 Wrong user password!: Wrong user password!
+The value {{ value }} has to be uuid but without dashes: The value {{ value }} has to be uuid but without dashes
+chat_uuid or to_user_id should be present!: chat_uuid or to_user_id should be present!

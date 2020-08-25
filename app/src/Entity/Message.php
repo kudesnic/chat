@@ -90,11 +90,6 @@ class Message
     private $user;
 
     /**
-     * @ORM\Column(type="boolean")
-     */
-    private $is_read;
-
-    /**
      * @ORM\ManyToOne(targetEntity=Chat::class, inversedBy="messages")
      * @ORM\JoinColumn(nullable=false)
      */
@@ -162,7 +157,7 @@ class Message
         return $this;
     }
 
-    public function getOrder(): ?int
+    public function getOrdering(): ?int
     {
         return $this->ordering;
     }
@@ -217,13 +212,6 @@ class Message
         return $this;
     }
 
-    public function setUnreadMessagesCount(?int $unread_messages_count): self
-    {
-        $this->unread_messages_count = $unread_messages_count;
-
-        return $this;
-    }
-
     public function getCreated(): int
     {
         return $this->created;
@@ -232,18 +220,6 @@ class Message
     public function getUpdated(): int
     {
         return $this->updated;
-    }
-
-    public function getIsRead(): bool
-    {
-        return $this->is_read;
-    }
-
-    public function setIsRead(bool $is_read): self
-    {
-        $this->is_read = $is_read;
-
-        return $this;
     }
 
     public function getChat(): ?Chat
