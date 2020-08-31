@@ -63,23 +63,28 @@ class MessageController extends AbstractController
         TranslatorInterface $translator
     ) {
         $user = $userHolder->getUser($request->getRequest());
+        $chatRepo = $this->entityManager->getRepository(Chat::class);
 
         if($request->chat_uuid){
-            $chat = $this->entityManager
-                ->getRepository(Chat::class)->findChatByUuidAndUser($request->chat_uuid, $user);
+            $chat = $chatRepo->findChatByUuidAndUser($request->chat_uuid, $user);
         } else {
-            $chat = new Chat();
-            $chat->setStrategy(Chat::STRATEGY_INTERNAL_CHAT);
-            $chat->setOwner($user);
-            $this->entityManager->persist($chat);
             $userRepository = $this->entityManager->getRepository(User::class);
             $receiverUser = $userRepository->find($request->to_user_id);
-            $receiverParticipant = $participantRepository->createUserParticipant($chat, $receiverUser);
-            $receiverParticipant->setUnreadMessagesCount(1);
-            $this->entityManager->persist($receiverParticipant);
 
-            $senderParticipant = $participantRepository->createUserParticipant($chat, $user);
-            $this->entityManager->persist($senderParticipant);
+            $chat = $chatRepo->findPrivateChatByTwoUsers($user, $receiverUser);
+
+            if(is_null($chat)) {
+                $chat = new Chat();
+
+                $chat->setStrategy(Chat::STRATEGY_INTERNAL_CHAT);
+                $chat->setOwner($user);
+                $this->entityManager->persist($chat);
+                $receiverParticipant = $participantRepository->createUserParticipant($chat, $receiverUser);
+                $this->entityManager->persist($receiverParticipant);
+
+                $senderParticipant = $participantRepository->createUserParticipant($chat, $user);
+                $this->entityManager->persist($senderParticipant);
+            }
         }
 
         if(is_null($chat)){
@@ -94,8 +99,7 @@ class MessageController extends AbstractController
         $messageEntity->setText($request->text);
         $this->entityManager->persist($messageEntity);
         $this->entityManager->flush();
-
-        return new ApiResponse($messageEntity, Response::HTTP_CREATED);
+        return new ApiResponse($chat, Response::HTTP_CREATED);
     }
 
     /**

@@ -15,12 +15,13 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Symfony\Component\Routing\Annotation\Route;
+use App\Validator\CustomUuidValidator;
 
 /**
  * Class ChatController
  * @package App\Controller
  *
- * @Route("chat", name="chat.")
+ * @Route("/chat", name="chat.")
  */
 class ChatController extends AbstractController
 {
@@ -70,7 +71,7 @@ class ChatController extends AbstractController
     }
 
     /**
-     * @Route("/{uuid}", name="show", requirements={"uuid":"\s+"},  methods={"GET"})
+     * @Route("/{uuid}", name="show", requirements={"uuid":CustomUuidValidator::VALID_PATTERN},  methods={"GET"})
      *
      * @param Request $request
      * @param JWTUserService $userHolder
@@ -81,15 +82,16 @@ class ChatController extends AbstractController
      * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
      */
     public function show(
+        string $uuid,
         Request $request,
         JWTUserService $userHolder,
         TranslatorInterface $translator
 
     ) {
         $loggedUser = $userHolder->getUser($request);
-        $chat = $this->chatRepo->findChatByUuidAndUser($request->query->get('uuid'), $loggedUser);
+        $chat = $this->chatRepo->findChatByUuidAndUser($uuid, $loggedUser);
         $userRepo = $this->entityManager->getRepository(User::class);
-        $canShow = $userRepo->areBelongedToTheSameTree($loggedUser, $chat->getUser());
+        $canShow = $userRepo->areBelongedToTheSameTree($loggedUser, $chat->getOwner());
         if($canShow == false){
             throw new AccessDeniedHttpException($translator->trans('You can\'t see this chat. It is not in your users tree'));
         }
@@ -98,7 +100,7 @@ class ChatController extends AbstractController
     }
 
     /**
-     * @Route("/{uuid}/messages", name="chat_messages", requirements={"uuid":"\s+"},  methods={"GET"})
+     * @Route("/{uuid}/messages", name="chat_messages", requirements={"uuid":CustomUuidValidator::VALID_PATTERN},  methods={"GET"})
      *
      * @param Chat $chat
      * @param Request $request
@@ -135,7 +137,7 @@ class ChatController extends AbstractController
     }
 
     /**
-     * @Route("/{uuid}", name="delete", requirements={"uuid":"\s+"},  methods={"DELETE"})
+     * @Route("/{uuid}", name="delete", requirements={"uuid":CustomUuidValidator::VALID_PATTERN},  methods={"DELETE"})
      *
      * @param Chat $chat
      * @param Request $request

@@ -2,12 +2,11 @@
 namespace App\Http;
 
 use Doctrine\Common\Annotations\AnnotationReader;
-use Doctrine\ORM\EntityManager;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
 use Symfony\Component\Serializer\Mapping\Loader\AnnotationLoader;
 use Symfony\Component\Serializer\NameConverter\CamelCaseToSnakeCaseNameConverter;
-use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
+use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
 use Symfony\Component\Serializer\Normalizer\PropertyNormalizer;
 use Symfony\Component\Serializer\Serializer;
 
@@ -53,8 +52,9 @@ class ApiResponse extends JsonResponse
 
         $classMetadataFactory = new ClassMetadataFactory(new AnnotationLoader(new AnnotationReader()));
         $nameConverter = new CamelCaseToSnakeCaseNameConverter();
-        $normalizer = new PropertyNormalizer($classMetadataFactory, $nameConverter);
-        $serializer = new Serializer([$normalizer]);
+        $propertyNormalizer = new PropertyNormalizer($classMetadataFactory, $nameConverter);
+        $dateTimeNormalizer = new DateTimeNormalizer();
+        $serializer = new Serializer([$propertyNormalizer, $dateTimeNormalizer]);
         //if object is a Doctrine Proxy, then load all object into proxy.
         //by default proxy has only primary key value, but any other properties are not populated
         if(is_object($data) && $data instanceof  \Doctrine\Common\Persistence\Proxy){

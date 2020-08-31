@@ -13,7 +13,7 @@ class CustomUuidValidator implements ValidatorInterface
     /**
      * Regular expression pattern for matching a UUID of any variant.
      */
-    private const VALID_PATTERN = '^([0-9A-Fa-f]{8}[0-9A-Fa-f]{4}[0-9A-Fa-f]{4}[0-9A-Fa-f]{4}[0-9A-Fa-f]{12})' .
+    const VALID_PATTERN = '^([0-9A-Fa-f]{8}[0-9A-Fa-f]{4}[0-9A-Fa-f]{4}[0-9A-Fa-f]{4}[0-9A-Fa-f]{12})' .
         '|' . '([0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12})$';
 
     /**

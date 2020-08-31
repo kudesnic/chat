@@ -6,6 +6,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 
 /**
@@ -14,6 +15,7 @@ use Gedmo\Mapping\Annotation as Gedmo;
 class Message
 {
     /**
+     * @Groups("APIGroup")
      * @ORM\Id()
      * @ORM\GeneratedValue(strategy="SEQUENCE")
      * @ORM\SequenceGenerator(sequenceName="message_seq", initialValue=1)
@@ -27,33 +29,38 @@ class Message
     private $chat_id;
 
     /**
+     * @Groups("APIGroup")
      * @ORM\Column(type="bigint", nullable=true)
      */
     private $parent_id;
 
     /**
+     * @Groups("APIGroup")
      * @ORM\Column(type="string", length=32767, nullable=true)
      */
     private $text;
 
     /**
+     * @Groups("APIGroup")
      * @ORM\Column(type="integer", nullable=true)
      */
     private $client_id;
 
     /**
+     * @Groups("APIGroup")
      * @ORM\Column(type="string", length=255, nullable=true)
      */
     private $file_path;
 
     /**
+     * @Groups("APIGroup")
      * @ORM\Column(type="integer")
      */
     private $user_id;
 
     /**
      * @var \DateTime $created
-     *
+     * @Groups("APIGroup")
      * @Gedmo\Timestampable(on="create")
      * @ORM\Column(type="datetime")
      */
@@ -61,13 +68,14 @@ class Message
 
     /**
      * @var \DateTime $updated
-     *
+     * @Groups("APIGroup")
      * @Gedmo\Timestampable(on="update")
      * @ORM\Column(type="datetime")
      */
     private $updated;
 
     /**
+     * @Groups("APIGroup")
      * @ORM\Column(type="integer")
      */
     private $ordering;
@@ -84,6 +92,7 @@ class Message
     private $messages;
 
     /**
+     * @Groups("APIGroup")
      * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="messages")
      * @ORM\JoinColumn(nullable=false, onDelete="CASCADE")
      */

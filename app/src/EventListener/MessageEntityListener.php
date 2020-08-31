@@ -28,11 +28,12 @@ class MessageEntityListener
 
         if(is_null($entity->getOrdering())){
             $ordering = $em->getRepository(Message::class)->getMaxMessageOrderForChat($entity->getChat());
-            $entity->setOrdering($ordering);
+            $entity->setOrdering($ordering + 1);
         }
 
         $participants = $entity->getChat()->getParticipants();
         foreach ($participants as $participant){
+
             if($participant->getUser()->getId() != $entity->getUser()->getId()){
                 $participant->setUnreadMessagesCount($participant->getUnreadMessagesCount() + 1);
             }

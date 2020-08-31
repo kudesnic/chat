@@ -9,6 +9,7 @@ use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidFactory;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 
 /**
@@ -36,22 +37,25 @@ class Chat
 
     /**
      * The internal primary identity key.
-     *
-     * @ORM\Column(type="uuid")
+     * @Groups("APIGroup")
+     * @ORM\Column(type="guid")
      */
     protected $uuid;
 
     /**
+     * @Groups("APIGroup")
      * @ORM\Column(type="integer")
      */
     private $owner_id;
 
     /**
+     * @Groups("APIGroup")
      * @ORM\Column(type="string", length=32)
      */
     private $strategy;
 
     /**
+     * @Groups("APIGroup")
      * @ORM\OneToMany(targetEntity="App\Entity\Message", mappedBy="chat", fetch="EXTRA_LAZY")
      */
     private $messages;
@@ -94,7 +98,6 @@ class Chat
 
         Uuid::setFactory($factory);
         $uuid4 = Uuid::uuid4();
-        echo '--------------------uuid = ' . $uuid4;
         $this->uuid = str_replace('-', '', $uuid4);
     }
 
@@ -121,18 +124,6 @@ class Chat
     public function setOwnerId(int $owner_id): self
     {
         $this->owner_id = $owner_id;
-
-        return $this;
-    }
-
-    public function getUserId(): ?int
-    {
-        return $this->user_id;
-    }
-
-    public function setUserId(int $user_id): self
-    {
-        $this->user_id = $user_id;
 
         return $this;
     }

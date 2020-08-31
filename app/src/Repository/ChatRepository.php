@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Chat;
+use App\Entity\Message;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\Mapping\ClassMetadata;
@@ -34,24 +35,54 @@ class ChatRepository extends ServiceEntityRepository
     public function findChatByUuidAndUser(string $uuid, User $user):? Chat
     {
         return $this->createQueryBuilder('c')
-            ->join('m.participants', 'p')
+            ->join('c.participants', 'p')
             ->leftJoin(
                 'c.messages',
                 'm',
                 Join::WITH,
-                'c.id = m.chat_id AND m.ordering > (( SELECT MAX(msg.ordering) FROM App\Entity\Message msg WHERE msg.chat_id = c.id ) - 20)'
+                    '(c.id = m.chat_id) AND (m.ordering = ( SELECT MAX(msg.ordering) FROM App\Entity\Message msg WHERE msg.chat_id = c.id ))'
             )
             ->join('m.user', 'message_user')
             ->addSelect('p')
             ->addSelect('m')
             ->addSelect('message_user')
-            ->andWhere('p.user_id = :user_id AND c.uuid = :uuid')
-            ->setParameter('user_id', $user->getId())
+            ->andWhere('p.user = :user AND c.uuid = :uuid')
+            ->setParameter('user', $user)
             ->setParameter('uuid', $uuid)
             ->getQuery()
+            ->setFetchMode(Message::class, "messages", ClassMetadata::FETCH_EAGER)
             ->getSingleResult();
     }
 
+    /**
+     * @param User $user1
+     * @param User $user2
+     * @return Chat|null
+     * @throws \Doctrine\ORM\NoResultException
+     * @throws \Doctrine\ORM\NonUniqueResultException
+     */
+    public function findPrivateChatByTwoUsers(User $user1, User $user2):? Chat
+    {
+        return $this->createQueryBuilder('c')
+            ->join('c.participants', 'p')
+            ->leftJoin(
+                'c.messages',
+                'm',
+                Join::WITH,
+                '(c.id = m.chat_id) AND (m.ordering = ( SELECT MAX(msg.ordering) FROM App\Entity\Message msg WHERE msg.chat_id = c.id ))'
+            )
+            ->join('m.user', 'message_user')
+            ->addSelect('p')
+            ->addSelect('m')
+            ->addSelect('message_user')
+            ->andWhere('c.strategy = :strategy AND (p.user = :first_user_id OR p.user = :second_user_id)')
+            ->setParameter('first_user_id', $user1)
+            ->setParameter('second_user_id', $user2)
+            ->setParameter('strategy', Chat::STRATEGY_INTERNAL_CHAT)
+            ->getQuery()
+            ->setFetchMode(Message::class, "messages", ClassMetadata::FETCH_EAGER)
+            ->getOneOrNullResult();
+    }
     /**
      * Extracts new chats and existing chats with new messages
      *
