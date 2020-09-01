@@ -6,6 +6,7 @@ use App\Entity\Chat;
 use App\Entity\Message;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Query;
 use Doctrine\ORM\Query\Expr\Join;
@@ -42,8 +43,12 @@ class MessageRepository extends ServiceEntityRepository
             ->getSingleScalarResult();
     }
 
-
-    public function getChatMessagesQueryBuilder(Chat $chat, User $user):QueryBuilder
+    /**
+     * @param Chat $chat
+     * @param User $user
+     * @return array
+     */
+    public function getChatMessagesQueryBuilder(Chat $chat, User $user): QueryBuilder
     {
         return $this->createQueryBuilder('m')
             ->leftJoin('m.user', 'u')
@@ -52,15 +57,7 @@ class MessageRepository extends ServiceEntityRepository
             ->addSelect('u')
             ->addSelect('c')
             ->andWhere('(m.chat_id = :chat_id) ')
-            ->setParameter('chat_id', $chat->getId())
-            ->setParameter('user_id', $user->getId());
-    }
-
-    public function getChatMessages(Chat $chat, User $user):array
-    {
-        return $this->getChatMessagesQueryBuilder($chat, $user)
-            ->getQuery()
-            ->getArrayResult();
+            ->setParameter('chat_id', $chat->getId());
     }
 
     /**

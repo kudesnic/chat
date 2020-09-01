@@ -47,9 +47,9 @@ class MessageController extends AbstractController
     /**
      * @Route("", name="store", methods={"POST"})
      *
-
      * @param MessageStoreDTORequest $request
      * @param JWTUserService $userHolder
+     * @param ParticipantRepository $participantRepository
      * @param TranslatorInterface $translator
      * @return ApiResponse
      * @throws \Doctrine\Common\Annotations\AnnotationException

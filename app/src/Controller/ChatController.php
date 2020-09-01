@@ -73,16 +73,21 @@ class ChatController extends AbstractController
     /**
      * @Route("/{uuid}", name="show", requirements={"uuid":CustomUuidValidator::VALID_PATTERN},  methods={"GET"})
      *
+     * @param string $uuid
+     * @param Chat $chat
      * @param Request $request
      * @param JWTUserService $userHolder
      * @param TranslatorInterface $translator
      * @return ApiResponse
      * @throws \Doctrine\Common\Annotations\AnnotationException
+     * @throws \Doctrine\ORM\NoResultException
+     * @throws \Doctrine\ORM\NonUniqueResultException
      * @throws \Lexik\Bundle\JWTAuthenticationBundle\Exception\JWTDecodeFailureException
      * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
      */
     public function show(
         string $uuid,
+        Chat $chat,
         Request $request,
         JWTUserService $userHolder,
         TranslatorInterface $translator
@@ -90,10 +95,10 @@ class ChatController extends AbstractController
     ) {
         $loggedUser = $userHolder->getUser($request);
         $chat = $this->chatRepo->findChatByUuidAndUser($uuid, $loggedUser);
-        $userRepo = $this->entityManager->getRepository(User::class);
-        $canShow = $userRepo->areBelongedToTheSameTree($loggedUser, $chat->getOwner());
-        if($canShow == false){
-            throw new AccessDeniedHttpException($translator->trans('You can\'t see this chat. It is not in your users tree'));
+        if(is_null($chat) || $this->chatRepo->hasAccessToChat($chat, $loggedUser) == false){
+            throw new AccessDeniedHttpException(
+                $translator->trans('You can\'t see this chat. It is not in your users tree or it is private chat')
+            );
         }
 
         return new ApiResponse($chat);
@@ -120,12 +125,16 @@ class ChatController extends AbstractController
         TranslatorInterface $translator
     ) {
         $loggedUser = $userHolder->getUser($request);
-        $userRepo = $this->entityManager->getRepository(User::class);
         $messageRepo = $this->entityManager->getRepository(Message::class);
-        $canShow = $userRepo->areBelongedToTheSameTree($loggedUser, $chat->getUser());
-        if($canShow == false){
-            throw new AccessDeniedHttpException($translator->trans('You can\'t see this chat messages. It is not in your users tree'));
+        $hasAccess = $this->chatRepo->hasAccessToChat($chat, $loggedUser);
+
+        if($hasAccess == false){
+            throw new AccessDeniedHttpException(
+                $translator
+                    ->trans('You can\'t see this chat messages. It is not in your users tree or it is private chat')
+            );
         }
+
         $qb = $messageRepo->getChatMessagesQueryBuilder($loggedUser, false);
         $paginationServiceByQueryBuilder->setRepository(get_class($messageRepo))
             ->buildQuery($qb, $request->query->get('page'), null);
@@ -155,7 +164,11 @@ class ChatController extends AbstractController
         TranslatorInterface $translator
     ) {
         $loggedUser = $userHolder->getUser($request);
-        if($loggedUser->getId() != $chat->getUserId()){
+        $userRepo = $this->entityManager->getRepository(User::class);
+        if(
+            $loggedUser->getId() != $chat->getUserId() ||
+            $userRepo->isNodeAChild($loggedUser, $chat->getUserId()) == false
+        ){
             throw new AccessDeniedHttpException(
                 $translator->trans('You can not delete this user, because it doesn\'t belong to you!')
             );

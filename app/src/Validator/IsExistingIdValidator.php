@@ -23,14 +23,16 @@ class IsExistingIdValidator extends ConstraintValidator
 
     public function validate($value, Constraint $constraint)
     {
-        $entityRepository = $this->em->getRepository($constraint->entityClass);
+        if(!is_null($value)){
+            $entityRepository = $this->em->getRepository($constraint->entityClass);
 
-        $searchResult = $entityRepository->find($value);
+            $searchResult = $entityRepository->find($value);
 
-        if (!$searchResult) {
-            $this->context->buildViolation($constraint->message)
-                ->setParameter('{{ value }}', $value)
-                ->addViolation();
+            if (!$searchResult) {
+                $this->context->buildViolation($constraint->message)
+                    ->setParameter('{{ value }}', $value)
+                    ->addViolation();
+            }
         }
     }
 }

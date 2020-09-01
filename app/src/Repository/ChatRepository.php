@@ -4,13 +4,16 @@ namespace App\Repository;
 
 use App\Entity\Chat;
 use App\Entity\Message;
+use App\Entity\Participant;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Query;
 use Doctrine\ORM\Query\Expr\Join;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * @method Chat|null find($id, $lockMode = null, $lockVersion = null)
@@ -26,6 +29,7 @@ class ChatRepository extends ServiceEntityRepository
     }
 
     /**
+     * Finds chat with last 20 messages
      * @param string $uuid
      * @param User $user
      * @return Chat|null
@@ -40,7 +44,7 @@ class ChatRepository extends ServiceEntityRepository
                 'c.messages',
                 'm',
                 Join::WITH,
-                    '(c.id = m.chat_id) AND (m.ordering = ( SELECT MAX(msg.ordering) FROM App\Entity\Message msg WHERE msg.chat_id = c.id ))'
+                    '(c.id = m.chat_id) AND ((m.ordering + 20) > ( SELECT MAX(msg.ordering) FROM App\Entity\Message msg WHERE msg.chat_id = c.id ))'
             )
             ->join('m.user', 'message_user')
             ->addSelect('p')
@@ -51,7 +55,33 @@ class ChatRepository extends ServiceEntityRepository
             ->setParameter('uuid', $uuid)
             ->getQuery()
             ->setFetchMode(Message::class, "messages", ClassMetadata::FETCH_EAGER)
-            ->getSingleResult();
+            ->getOneOrNullResult();
+    }
+
+    /**
+     * Check whether user has rights to see a chat data or doesnt. NO ONE can see a private messages!
+     *
+     * @param Chat $chat
+     * @param UserInterface $loggedUser
+     * @return bool
+     */
+    public function hasAccessToChat(Chat $chat, UserInterface $loggedUser): bool
+    {
+        $canSeeChat = false;
+        $userRepo = $this->_em->getRepository(User::class);
+        $participantRepo = $this->_em->getRepository(Participant::class);
+        if($loggedUser->getId() ==  $chat->getOwner()->getId()){
+            $canSeeChat = true;
+        } elseif($participantRepo->findOneBy(['chat' => $chat, 'user' => $loggedUser])) {
+            $canSeeChat = true;
+        } elseif(
+            $userRepo->isNodeAChild($loggedUser, $chat->getOwner()) &&
+            $chat->getStrategy() == Chat::STRATEGY_EXTERNAL_CHAT
+        ) {
+            $canSeeChat = true;
+        }
+
+        return $canSeeChat;
     }
 
     /**
@@ -83,6 +113,7 @@ class ChatRepository extends ServiceEntityRepository
             ->setFetchMode(Message::class, "messages", ClassMetadata::FETCH_EAGER)
             ->getOneOrNullResult();
     }
+
     /**
      * Extracts new chats and existing chats with new messages
      *
