@@ -50,7 +50,7 @@ class AuthenticationSuccessListener
             return;
         }
         $tokenBuilder = (new Builder())
-            ->withClaim('mercure', ['subscribe' => [urlencode('conversations/' . $user->getEmail())]])
+            ->withClaim('mercure', ['subscribe' => ['conversations/' . $user->getEmail()]])
             ->getToken(
                 new Sha256(),
                 new Key($this->parameterBag->get('mercure_secret_key'))

@@ -111,7 +111,7 @@ class MessageController extends AbstractController
         $chat = $chatRepo->find($chat->getId());
         foreach ($chat->getParticipants() as $recepient){
             if($recepient->getUser()->  getId() != $user->getId()){
-                $topicsArray[] = urlencode(sprintf('conversations/%s', $recepient->getUser()->getEmail()));
+                $topicsArray[] = sprintf('conversations/%s', $recepient->getUser()->getEmail());
             }
         }
 
