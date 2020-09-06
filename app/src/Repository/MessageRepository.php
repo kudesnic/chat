@@ -57,7 +57,8 @@ class MessageRepository extends ServiceEntityRepository
             ->addSelect('u')
             ->addSelect('c')
             ->andWhere('(m.chat_id = :chat_id) ')
-            ->setParameter('chat_id', $chat->getId());
+            ->setParameter('chat_id', $chat->getId())
+            ->orderBy('m.ordering', Criteria::DESC);
     }
 
     /**

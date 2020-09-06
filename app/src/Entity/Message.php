@@ -30,12 +30,6 @@ class Message
 
     /**
      * @Groups("APIGroup")
-     * @ORM\Column(type="bigint", nullable=true)
-     */
-    private $parent_id;
-
-    /**
-     * @Groups("APIGroup")
      * @ORM\Column(type="string", length=32767, nullable=true)
      */
     private $text;
@@ -81,6 +75,7 @@ class Message
     private $ordering;
 
     /**
+     *  @Groups("APIGroup")
      * @ORM\ManyToOne(targetEntity="App\Entity\Message", inversedBy="messages")
      * @ORM\JoinColumn(nullable=true, onDelete="CASCADE")
      */
@@ -221,12 +216,12 @@ class Message
         return $this;
     }
 
-    public function getCreated(): int
+    public function getCreated()
     {
         return $this->created;
     }
 
-    public function getUpdated(): int
+    public function getUpdated()
     {
         return $this->updated;
     }

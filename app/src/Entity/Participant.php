@@ -18,8 +18,13 @@ class Participant
     private $id;
 
     /**
+     * @ORM\Column(type="integer")
+     */
+    private $chat_id;
+
+    /**
      * @ORM\ManyToOne(targetEntity=Chat::class, inversedBy="participants")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\JoinColumn(name="chat_id", nullable=false)
      */
     private $chat;
 
@@ -41,6 +46,11 @@ class Participant
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function getChatId(): int
+    {
+        return $this->chat_id;
     }
 
     public function getChat(): ?Chat

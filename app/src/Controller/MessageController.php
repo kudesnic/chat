@@ -14,6 +14,9 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Mercure\PublisherInterface;
+use Symfony\Component\Mercure\Update;
+use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Symfony\Component\Routing\Annotation\Route;
 
@@ -60,6 +63,8 @@ class MessageController extends AbstractController
         MessageStoreDTORequest $request,
         JWTUserService $userHolder,
         ParticipantRepository $participantRepository,
+        SerializerInterface $serializer,
+        PublisherInterface $publisher,
         TranslatorInterface $translator
     ) {
         $user = $userHolder->getUser($request->getRequest());
@@ -99,7 +104,25 @@ class MessageController extends AbstractController
         $messageEntity->setText($request->text);
         $this->entityManager->persist($messageEntity);
         $this->entityManager->flush();
-        return new ApiResponse($chat, Response::HTTP_CREATED);
+
+        $topicsArray = [
+            sprintf('conversations/%s', $chat->getUuid())
+        ];
+        $chat = $chatRepo->find($chat->getId());
+        foreach ($chat->getParticipants() as $recepient){
+            if($recepient->getUser()->  getId() != $user->getId()){
+                $topicsArray[] = urlencode(sprintf('conversations/%s', $recepient->getUser()->getEmail()));
+            }
+        }
+
+        $update = new Update(
+            $topicsArray,
+            $serializer->serialize($messageEntity, 'json', ['groups' => 'APIGroup']),
+            true // private
+        );
+        $publisher->__invoke($update);
+
+        return new ApiResponse($chat , Response::HTTP_CREATED);
     }
 
     /**

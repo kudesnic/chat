@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Chat;
 use App\Entity\Message;
+use App\Entity\Participant;
 use App\Entity\User;
 use App\Http\ApiResponse;
 use App\Repository\ChatRepository;
@@ -13,6 +14,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\WebLink\Link;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Validator\CustomUuidValidator;
@@ -46,7 +48,7 @@ class ChatController extends AbstractController
     }
 
     /**
-     * @Route("/", name="list")
+     * @Route("", name="list")
      *
      * @param Chat $chat
      * @param Request $request
@@ -60,14 +62,17 @@ class ChatController extends AbstractController
     public function index(Request $request,  JWTUserService $userHolder, PaginationServiceByQueryBuilder $paginationServiceByQueryBuilder)
     {
         $qb = $this->chatRepo->getNewAndUpdatedChatsQueryBuilder($userHolder->getUser($request), false);
-        $paginationServiceByQueryBuilder->setRepository(get_class($this->messageRepo))
+        $paginationServiceByQueryBuilder->setRepository(Chat::class)
             ->buildQuery($qb, $request->query->get('page'), null);
         //add eager selections to query passed by reference
         $this->chatRepo->modifyQueryToEager($paginationServiceByQueryBuilder->query);
 
         $result = $paginationServiceByQueryBuilder->paginateFromQuery();
 
-        return new ApiResponse($result);
+        $hubUrl = $this->getParameter('mercure.default_hub');
+        $this->addLink($request, new Link('mercure', $hubUrl));
+
+        return new ApiResponse($result, 200);
     }
 
     /**
@@ -135,14 +140,51 @@ class ChatController extends AbstractController
             );
         }
 
-        $qb = $messageRepo->getChatMessagesQueryBuilder($loggedUser, false);
-        $paginationServiceByQueryBuilder->setRepository(get_class($messageRepo))
+        $qb = $messageRepo->getChatMessagesQueryBuilder($chat, $loggedUser);
+        $paginationServiceByQueryBuilder->setRepository(Message::class)
             ->buildQuery($qb, $request->query->get('page'), null);
         //add eager selections to query passed by reference
         $messageRepo->modifyQueryToEager($paginationServiceByQueryBuilder->query);
         $result = $paginationServiceByQueryBuilder->paginateFromQuery();
 
         return new ApiResponse($result);
+    }
+
+    /**
+     * @Route("/{uuid}/set-messages-as-read", name="chat_messages", requirements={"uuid":CustomUuidValidator::VALID_PATTERN},  methods={"PUT"})
+     *
+     * @param Chat $chat
+     * @param Request $request
+     * @param JWTUserService $userHolder
+     * @param TranslatorInterface $translator
+     * @return ApiResponse
+     * @throws \Doctrine\Common\Annotations\AnnotationException
+     * @throws \Lexik\Bundle\JWTAuthenticationBundle\Exception\JWTDecodeFailureException
+     * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
+     */
+    public function setChatMessagesAsRead(
+        Chat $chat,
+        Request $request,
+        JWTUserService $userHolder,
+        TranslatorInterface $translator
+    ) {
+        $loggedUser = $userHolder->getUser($request);
+        $hasAccess = $this->chatRepo->hasAccessToChat($chat, $loggedUser);
+
+        if($hasAccess == false){
+            throw new AccessDeniedHttpException(
+                $translator
+                    ->trans('You don\'t have an access to this chat!')
+            );
+        }
+
+        $participantRepo = $this->entityManager->getRepository(Participant::class);
+        $participant = $participantRepo->findOneBy(['chat' => $chat, 'user' => $loggedUser]);
+        $participant->setUnreadMessagesCount(null);
+        $this->entityManager->persist($participant);
+        $this->entityManager->flush($participant);
+
+        return new ApiResponse([]);
     }
 
     /**

@@ -53,8 +53,9 @@ class ChatRepository extends ServiceEntityRepository
             ->andWhere('p.user = :user AND c.uuid = :uuid')
             ->setParameter('user', $user)
             ->setParameter('uuid', $uuid)
+            ->orderBy('m.ordering', Criteria::DESC)
             ->getQuery()
-            ->setFetchMode(Message::class, "messages", ClassMetadata::FETCH_EAGER)
+            ->setFetchMode(Chat::class, "messages", ClassMetadata::FETCH_EAGER)
             ->getOneOrNullResult();
     }
 
@@ -95,17 +96,17 @@ class ChatRepository extends ServiceEntityRepository
     {
         return $this->createQueryBuilder('c')
             ->join('c.participants', 'p')
+            ->join('c.participants', 'p2')
             ->leftJoin(
                 'c.messages',
                 'm',
                 Join::WITH,
-                '(c.id = m.chat_id) AND (m.ordering = ( SELECT MAX(msg.ordering) FROM App\Entity\Message msg WHERE msg.chat_id = c.id ))'
+                '(c.id = m.chat_id) AND ((m.ordering + 20) > ( SELECT MAX(msg.ordering) FROM App\Entity\Message msg WHERE msg.chat_id = c.id ))'
             )
             ->join('m.user', 'message_user')
-            ->addSelect('p')
             ->addSelect('m')
             ->addSelect('message_user')
-            ->andWhere('c.strategy = :strategy AND (p.user = :first_user_id OR p.user = :second_user_id)')
+            ->andWhere('c.strategy = :strategy AND (p.user = :first_user_id AND p2.user = :second_user_id)')
             ->setParameter('first_user_id', $user1)
             ->setParameter('second_user_id', $user2)
             ->setParameter('strategy', Chat::STRATEGY_INTERNAL_CHAT)
@@ -130,11 +131,11 @@ class ChatRepository extends ServiceEntityRepository
     }
 
     /**
-     * @param User $user
+     * @param UserInterface $user
      * @param bool $onlyUpdatedChats
      * @return QueryBuilder
      */
-    public function getNewAndUpdatedChatsQueryBuilder(User $user, bool $onlyUpdatedChats = true):QueryBuilder
+    public function getNewAndUpdatedChatsQueryBuilder(UserInterface $user, bool $onlyUpdatedChats = true):QueryBuilder
     {
         $qb = $this->createQueryBuilder('c')
             ->join('c.participants', 'p')
@@ -142,22 +143,23 @@ class ChatRepository extends ServiceEntityRepository
                 'c.messages',
                 'm',
                 Join::WITH,
-                'c.id = m.chat_id AND m.ordering = ( SELECT MAX(msg.ordering) FROM App\Entity\Message msg WHERE msg.chat_id = c.id )'
+                '(c.id = m.chat_id) AND (m.ordering = ( SELECT MAX(msg.ordering) FROM App\Entity\Message msg WHERE msg.chat_id = c.id ) )'
             )
+            ->join('m.user', 'message_user')
             ->leftJoin(
                 'c.participants',
                 'other_participants',
                 Join::WITH,
-                'c.id = other_participants.chat_id AND other_participants.user_id <> :user_id'
+                'c.id = other_participants.chat_id AND other_participants.user <> :user'
             )
             ->join('other_participants.user', 'otherp_user')
-            ->addSelect('ums')
             ->addSelect('other_participants')
             ->addSelect('otherp_user')
             ->addSelect('m')
-            ->andWhere('p.user_id = :owner_id AND p.unread_messages_count IS NOT NULL')
-            ->setParameter('owner_id', $user->getId())
-            ->setParameter('user_id', $user->getId());
+            ->addSelect('message_user')
+            ->andWhere('p.user = :user ')// AND p.unread_messages_count IS NOT NULL'
+            ->orderBy('m.created', Criteria::DESC)
+            ->setParameter('user', $user);
 
         return $qb;
     }
@@ -167,8 +169,8 @@ class ChatRepository extends ServiceEntityRepository
      */
     public function modifyQueryToEager(Query &$query)
     {
-         $query->setFetchMode('App\Entity\Chat', "messages", ClassMetadata::FETCH_EAGER)
-            ->setFetchMode('App\Entity\Participant', "other_participants", ClassMetadata::FETCH_EAGER)
-            ->setFetchMode('App\Entity\User', "otherp_user", ClassMetadata::FETCH_EAGER);
+         $query->setFetchMode(Chat::class, "messages", ClassMetadata::FETCH_EAGER)
+            ->setFetchMode(Chat::class, "other_participants", ClassMetadata::FETCH_EAGER)
+            ->setFetchMode(Chat::class, "otherp_user", ClassMetadata::FETCH_EAGER);
     }
 }

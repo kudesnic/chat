@@ -64,14 +64,18 @@ class PaginationServiceByQueryBuilder extends  PaginationServiceAbstract
      */
     public function buildQuery(QueryBuilder $qb, ?int $page = null,  ?int $perPage = null): self
     {
+
         $this->setCurrentPage($page);
         if(is_null($perPage) == false){
             $this->perPage = $perPage;
         }
+
         $this->setTotal($qb);
+
         $this->setCalculatedParams();
-        $this->qb->setMaxResults($this->perPage)->setFirstResult($this->offset);
+        $this->qb = $qb->setMaxResults($this->perPage)->setFirstResult($this->offset);
         $this->query = $this->qb->getQuery();
+//        dd($qb->getQuery()->execute());
 
         return $this;
     }
@@ -117,16 +121,11 @@ class PaginationServiceByQueryBuilder extends  PaginationServiceAbstract
      */
     protected function setTotal(QueryBuilder $qb):void
     {
-        $selectPart = $qb->getDQLPart('select');
-        $orderByPart = $qb->getDQLPart('orderBy');
-        $this->total = $qb->select('COUNT(' . $qb->getRootAlias() . ')')
+        $qbDuplicate = clone $qb;
+        $this->total = $qbDuplicate->select('COUNT(' . $qbDuplicate->getRootAlias() . ')')
             ->resetDQLPart('orderBy')
             ->getQuery()
             ->getSingleScalarResult();
-
-        //add back removed parts of query
-        $qb->add('select', $selectPart);
-        $qb->add('orderBy', $orderByPart);
     }
 
     /**

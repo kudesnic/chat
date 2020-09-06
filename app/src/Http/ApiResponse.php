@@ -12,12 +12,14 @@ use Symfony\Component\Serializer\Serializer;
 
 class ApiResponse extends JsonResponse
 {
+    private $additionalData = [];
     /**
      * ApiResponse constructor.
      * @param null $data
+     * @param int $status
      * @param string|null $message
      * @param array $errors
-     * @param int $status
+     * @param array $additionalData
      * @param array $headers
      * @param bool $json
      * @throws \Doctrine\Common\Annotations\AnnotationException
@@ -27,24 +29,27 @@ class ApiResponse extends JsonResponse
         $data = null,
         int $status = 200,
         string $message = null,
+        array $additionalData = [],
         array $errors = [],
         array $headers = [],
         bool $json = false
     ) {
-        parent::__construct($this->format($data, $message, $errors), $status, $headers, $json);
+        parent::__construct($this->format($data, $additionalData, $message, $errors), $status, $headers, $json);
+        $this->additionalData = $additionalData;
     }
 
     /**
      * Format the API response.
      *
-     * @param null $data
+     * @param array|null $data
+     * @param array $additionalData
      * @param string|null $message
      * @param array $errors
      * @return array
      * @throws \Doctrine\Common\Annotations\AnnotationException
      * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
      */
-    private function format($data = null, string $message = null, array $errors = [])
+    private function format($data = null, $additionalData = [], ?string $message = null, array $errors = [])
     {
         if ($data === null){
             $data = new \ArrayObject();
@@ -66,7 +71,7 @@ class ApiResponse extends JsonResponse
 
         $response = [
             'message' => $message,
-            'data'    => $data,
+            'data'    => array_merge($data, $additionalData),
         ];
         if ($errors) {
             $response['errors'] = $errors;

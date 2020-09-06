@@ -49,7 +49,7 @@ abstract class PaginationServiceAbstract
     /**
      * Sets the repository for a class.
      *
-     * @param string $className
+     * @param string $className Entity class
      * @return self
      */
     public function setRepository(string $className):self
