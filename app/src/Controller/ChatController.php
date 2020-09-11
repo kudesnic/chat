@@ -5,15 +5,14 @@ namespace App\Controller;
 use App\Entity\Chat;
 use App\Entity\Message;
 use App\Entity\Participant;
-use App\Entity\User;
 use App\Http\ApiResponse;
 use App\Repository\ChatRepository;
+use App\Security\ChatVoter;
 use App\Service\JWTUserService;
 use App\Service\PaginationServiceByQueryBuilder;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\WebLink\Link;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Symfony\Component\Routing\Annotation\Route;
@@ -90,21 +89,9 @@ class ChatController extends AbstractController
      * @throws \Lexik\Bundle\JWTAuthenticationBundle\Exception\JWTDecodeFailureException
      * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
      */
-    public function show(
-        string $uuid,
-        Chat $chat,
-        Request $request,
-        JWTUserService $userHolder,
-        TranslatorInterface $translator
-
-    ) {
-        $loggedUser = $userHolder->getUser($request);
-        $chat = $this->chatRepo->findChatByUuidAndUser($uuid, $loggedUser);
-        if(is_null($chat) || $this->chatRepo->hasAccessToChat($chat, $loggedUser) == false){
-            throw new AccessDeniedHttpException(
-                $translator->trans('You can\'t see this chat. It is not in your users tree or it is private chat')
-            );
-        }
+    public function show(Chat $chat)
+    {
+        $this->denyAccessUnlessGranted(ChatVoter::VIEW, $chat);
 
         return new ApiResponse($chat);
     }
@@ -126,20 +113,11 @@ class ChatController extends AbstractController
         Chat $chat,
         Request $request,
         JWTUserService $userHolder,
-        PaginationServiceByQueryBuilder $paginationServiceByQueryBuilder,
-        TranslatorInterface $translator
+        PaginationServiceByQueryBuilder $paginationServiceByQueryBuilder
     ) {
         $loggedUser = $userHolder->getUser($request);
         $messageRepo = $this->entityManager->getRepository(Message::class);
-        $hasAccess = $this->chatRepo->hasAccessToChat($chat, $loggedUser);
-
-        if($hasAccess == false){
-            throw new AccessDeniedHttpException(
-                $translator
-                    ->trans('You can\'t see this chat messages. It is not in your users tree or it is private chat')
-            );
-        }
-
+        $this->denyAccessUnlessGranted(ChatVoter::VIEW, $chat);
         $qb = $messageRepo->getChatMessagesQueryBuilder($chat, $loggedUser);
         $paginationServiceByQueryBuilder->setRepository(Message::class)
             ->buildQuery($qb, $request->query->get('page'), null);
@@ -151,7 +129,7 @@ class ChatController extends AbstractController
     }
 
     /**
-     * @Route("/{uuid}/set-messages-as-read", name="chat_messages", requirements={"uuid":CustomUuidValidator::VALID_PATTERN},  methods={"PUT"})
+     * @Route("/{uuid}/set-messages-as-read", name="set_messages_as_read", requirements={"uuid":CustomUuidValidator::VALID_PATTERN},  methods={"PUT"})
      *
      * @param Chat $chat
      * @param Request $request
@@ -165,19 +143,10 @@ class ChatController extends AbstractController
     public function setChatMessagesAsRead(
         Chat $chat,
         Request $request,
-        JWTUserService $userHolder,
-        TranslatorInterface $translator
+        JWTUserService $userHolder
     ) {
         $loggedUser = $userHolder->getUser($request);
-        $hasAccess = $this->chatRepo->hasAccessToChat($chat, $loggedUser);
-
-        if($hasAccess == false){
-            throw new AccessDeniedHttpException(
-                $translator
-                    ->trans('You don\'t have an access to this chat!')
-            );
-        }
-
+        $this->denyAccessUnlessGranted(ChatVoter::VIEW, $chat);
         $participantRepo = $this->entityManager->getRepository(Participant::class);
         $participant = $participantRepo->findOneBy(['chat' => $chat, 'user' => $loggedUser]);
         $participant->setUnreadMessagesCount(null);
@@ -199,24 +168,11 @@ class ChatController extends AbstractController
      * @throws \Lexik\Bundle\JWTAuthenticationBundle\Exception\JWTDecodeFailureException
      * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
      */
-    public function destroy(
-        Chat $chat,
-        Request $request,
-        JWTUserService $userHolder,
-        TranslatorInterface $translator
-    ) {
-        $loggedUser = $userHolder->getUser($request);
-        $userRepo = $this->entityManager->getRepository(User::class);
-        if(
-            $loggedUser->getId() != $chat->getUserId() ||
-            $userRepo->isNodeAChild($loggedUser, $chat->getUserId()) == false
-        ){
-            throw new AccessDeniedHttpException(
-                $translator->trans('You can not delete this user, because it doesn\'t belong to you!')
-            );
-        }
-        $this->em->remove($chat);
-        $this->em->flush();
+    public function destroy(Chat $chat)
+    {
+        $this->denyAccessUnlessGranted(ChatVoter::DELETE, $chat);
+        $this->entityManager->remove($chat);
+        $this->entityManager->flush();
 
         return new ApiResponse();
     }

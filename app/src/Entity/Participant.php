@@ -24,7 +24,7 @@ class Participant
 
     /**
      * @ORM\ManyToOne(targetEntity=Chat::class, inversedBy="participants")
-     * @ORM\JoinColumn(name="chat_id", nullable=false)
+     * @ORM\JoinColumn(name="chat_id", nullable=false, onDelete="CASCADE")
      */
     private $chat;
 

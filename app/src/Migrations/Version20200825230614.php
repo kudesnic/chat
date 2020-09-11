@@ -22,9 +22,6 @@ final class Version20200825230614 extends AbstractMigration
         // this up() migration is auto-generated, please modify it to your needs
         $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'postgresql', 'Migration can only be executed safely on \'postgresql\'.');
 
-        $this->addSql('ALTER TABLE users ALTER roles TYPE json');
-        $this->addSql('ALTER TABLE users ALTER roles DROP DEFAULT');
-        $this->addSql('ALTER TABLE users ALTER status TYPE VARCHAR(255)');
         $this->addSql('ALTER TABLE message DROP is_read');
     }
 
@@ -35,8 +32,5 @@ final class Version20200825230614 extends AbstractMigration
 
         $this->addSql('CREATE SCHEMA public');
         $this->addSql('ALTER TABLE message ADD is_read BOOLEAN NOT NULL');
-        $this->addSql('ALTER TABLE users ALTER roles TYPE JSON');
-        $this->addSql('ALTER TABLE users ALTER roles DROP DEFAULT');
-        $this->addSql('ALTER TABLE users ALTER status TYPE VARCHAR(10)');
     }
 }

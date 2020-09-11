@@ -8,6 +8,7 @@ use App\Entity\Message;
 use App\Entity\User;
 use App\Http\ApiResponse;
 use App\Repository\ParticipantRepository;
+use App\Security\ChatVoter;
 use App\Service\JWTUserService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -91,12 +92,7 @@ class MessageController extends AbstractController
                 $this->entityManager->persist($senderParticipant);
             }
         }
-
-        if(is_null($chat)){
-            throw new NotFoundHttpException(
-                $translator->trans('You dont participate in chat with uuid = ' . $request->chat_uuid)
-            );
-        }
+        $this->denyAccessUnlessGranted(ChatVoter::VIEW, $chat);
 
         $messageEntity = new Message();
         $messageEntity->setUser($user);
@@ -104,7 +100,7 @@ class MessageController extends AbstractController
         $messageEntity->setText($request->text);
         $this->entityManager->persist($messageEntity);
         $this->entityManager->flush();
-
+        $chat->addMessage($messageEntity);
         $topicsArray = [
             sprintf('conversations/%s', $chat->getUuid())
         ];

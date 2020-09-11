@@ -22,9 +22,6 @@ final class Version20200825230410 extends AbstractMigration
         // this up() migration is auto-generated, please modify it to your needs
         $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'postgresql', 'Migration can only be executed safely on \'postgresql\'.');
 
-        $this->addSql('ALTER TABLE users ALTER roles TYPE json');
-        $this->addSql('ALTER TABLE users ALTER roles DROP DEFAULT');
-        $this->addSql('ALTER TABLE users ALTER status TYPE VARCHAR(255)');
         $this->addSql('ALTER TABLE chat DROP CONSTRAINT fk_659df2aa166d1f9c');
         $this->addSql('DROP INDEX idx_659df2aa166d1f9c');
         $this->addSql('ALTER TABLE chat DROP project_id');
@@ -39,9 +36,6 @@ final class Version20200825230410 extends AbstractMigration
         $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'postgresql', 'Migration can only be executed safely on \'postgresql\'.');
 
         $this->addSql('CREATE SCHEMA public');
-        $this->addSql('ALTER TABLE users ALTER roles TYPE JSON');
-        $this->addSql('ALTER TABLE users ALTER roles DROP DEFAULT');
-        $this->addSql('ALTER TABLE users ALTER status TYPE VARCHAR(10)');
         $this->addSql('ALTER TABLE chat ADD project_id INT NOT NULL');
         $this->addSql('ALTER TABLE chat ADD CONSTRAINT fk_659df2aa166d1f9c FOREIGN KEY (project_id) REFERENCES project (id) NOT DEFERRABLE INITIALLY IMMEDIATE');
         $this->addSql('CREATE INDEX idx_659df2aa166d1f9c ON chat (project_id)');

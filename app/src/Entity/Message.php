@@ -25,6 +25,7 @@ class Message
 
     /**
      * @ORM\Column(type="integer")
+     * @ORM\JoinColumn(nullable=false, onDelete="CASCADE")
      */
     private $chat_id;
 

@@ -40,6 +40,7 @@ class ChatRepository extends ServiceEntityRepository
     {
         return $this->createQueryBuilder('c')
             ->join('c.participants', 'p')
+            ->leftJoin('c.participants', 'all_participants')
             ->leftJoin(
                 'c.messages',
                 'm',
@@ -47,7 +48,7 @@ class ChatRepository extends ServiceEntityRepository
                     '(c.id = m.chat_id) AND ((m.ordering + 20) > ( SELECT MAX(msg.ordering) FROM App\Entity\Message msg WHERE msg.chat_id = c.id ))'
             )
             ->join('m.user', 'message_user')
-            ->addSelect('p')
+            ->addSelect('all_participants')
             ->addSelect('m')
             ->addSelect('message_user')
             ->andWhere('p.user = :user AND c.uuid = :uuid')
