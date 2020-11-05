@@ -14,7 +14,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Mercure\PublisherInterface;
 use Symfony\Component\Mercure\Update;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -54,6 +53,8 @@ class MessageController extends AbstractController
      * @param MessageStoreDTORequest $request
      * @param JWTUserService $userHolder
      * @param ParticipantRepository $participantRepository
+     * @param SerializerInterface $serializer
+     * @param PublisherInterface $publisher
      * @param TranslatorInterface $translator
      * @return ApiResponse
      * @throws \Doctrine\Common\Annotations\AnnotationException
@@ -124,7 +125,6 @@ class MessageController extends AbstractController
     /**
      * @Route("/{id}", name="destroy", requirements={"id":"\d+"},  methods={"DELETE"})
      *
-
      * @param Request $request
      * @param JWTUserService $userHolder
      * @return ApiResponse

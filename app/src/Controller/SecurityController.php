@@ -118,6 +118,8 @@ class SecurityController extends AbstractController
      * @param InvitedUserAuthenticationSuccessHandler $authHandler
      * @param TranslatorInterface $translator
      * @return ApiResponse|\Lexik\Bundle\JWTAuthenticationBundle\Response\JWTAuthenticationSuccessResponse
+     * @throws \Doctrine\Common\Annotations\AnnotationException
+     * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
      */
     public function loginForActivation(
         Request $request,

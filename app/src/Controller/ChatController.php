@@ -14,7 +14,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\WebLink\Link;
-use Symfony\Contracts\Translation\TranslatorInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Validator\CustomUuidValidator;
 
@@ -49,7 +48,6 @@ class ChatController extends AbstractController
     /**
      * @Route("", name="list")
      *
-     * @param Chat $chat
      * @param Request $request
      * @param JWTUserService $userHolder
      * @param PaginationServiceByQueryBuilder $paginationServiceByQueryBuilder
@@ -77,16 +75,9 @@ class ChatController extends AbstractController
     /**
      * @Route("/{uuid}", name="show", requirements={"uuid":CustomUuidValidator::VALID_PATTERN},  methods={"GET"})
      *
-     * @param string $uuid
      * @param Chat $chat
-     * @param Request $request
-     * @param JWTUserService $userHolder
-     * @param TranslatorInterface $translator
      * @return ApiResponse
      * @throws \Doctrine\Common\Annotations\AnnotationException
-     * @throws \Doctrine\ORM\NoResultException
-     * @throws \Doctrine\ORM\NonUniqueResultException
-     * @throws \Lexik\Bundle\JWTAuthenticationBundle\Exception\JWTDecodeFailureException
      * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
      */
     public function show(Chat $chat)
@@ -103,7 +94,6 @@ class ChatController extends AbstractController
      * @param Request $request
      * @param JWTUserService $userHolder
      * @param PaginationServiceByQueryBuilder $paginationServiceByQueryBuilder
-     * @param TranslatorInterface $translator
      * @return ApiResponse
      * @throws \Doctrine\Common\Annotations\AnnotationException
      * @throws \Lexik\Bundle\JWTAuthenticationBundle\Exception\JWTDecodeFailureException
@@ -134,7 +124,6 @@ class ChatController extends AbstractController
      * @param Chat $chat
      * @param Request $request
      * @param JWTUserService $userHolder
-     * @param TranslatorInterface $translator
      * @return ApiResponse
      * @throws \Doctrine\Common\Annotations\AnnotationException
      * @throws \Lexik\Bundle\JWTAuthenticationBundle\Exception\JWTDecodeFailureException
@@ -160,12 +149,8 @@ class ChatController extends AbstractController
      * @Route("/{uuid}", name="delete", requirements={"uuid":CustomUuidValidator::VALID_PATTERN},  methods={"DELETE"})
      *
      * @param Chat $chat
-     * @param Request $request
-     * @param JWTUserService $userHolder
-     * @param TranslatorInterface $translator
      * @return ApiResponse
      * @throws \Doctrine\Common\Annotations\AnnotationException
-     * @throws \Lexik\Bundle\JWTAuthenticationBundle\Exception\JWTDecodeFailureException
      * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
      */
     public function destroy(Chat $chat)

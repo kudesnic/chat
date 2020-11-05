@@ -45,6 +45,7 @@ class Base64ImageServiceTest extends WebTestCase
         $this->assertIsString($filePath);
         $this->assertFileExists($filePath);
         $this->assertFileIsReadable($filePath);
+        unlink($filePath);
     }
 
 }
